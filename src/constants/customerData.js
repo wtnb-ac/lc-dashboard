@@ -23,7 +23,7 @@ export const initialCustomerData = {
       medicalBenefitsIncluded: ['daily', 'treatment', 'postDischarge']
     },
     planAData: { // プレミアプラン
-      name: "万全プレミアプラン",
+      name: "プレミアプラン",
       description: "推奨プランをベースに、医療保障と重い病気への備えをさらに手厚くした安心重視プランです。",
       deathLumpsum: 1000, deathAnnuity: 10, disabilityLumpsum: 1000, disabilityMonthly: 20, // ★ 就業不能一時金を1000に修正
       medicalDaily: 8000, medicalSurgery: 10, criticalCancer: 150, criticalCirculatory: 150, // ★ 重病保障を150ずつに修正
@@ -33,7 +33,7 @@ export const initialCustomerData = {
       medicalBenefitsIncluded: ['daily', 'lumpSum', 'treatment', 'postDischarge']
     },
     planB_MedicalFocusData: { // 抑えめプラン (医療・重病フォーカス)
-      name: "抑えめプラン(医療重視)",
+      name: "医療重視プラン",
       description: "推奨プランをベースに、死亡・就業不能保障を抑え、医療と重病への備えを重視したプランです。",
       deathLumpsum: 300, deathAnnuity: 7, disabilityLumpsum: 500, disabilityMonthly: 15, // ★ 死亡年金を 7 に修正
       medicalDaily: 4000, medicalSurgery: 0, criticalCancer: 100, criticalCirculatory: 100,
@@ -43,7 +43,7 @@ export const initialCustomerData = {
       medicalBenefitsIncluded: ['daily', 'treatment', 'postDischarge']
     },
     planC_DeathFocusData: { // 抑えめプラン (死亡・就業不能フォーカス)
-      name: "抑えめプラン(生活保障重視)",
+      name: "生活保障重視プラン",
       description: "推奨プランをベースに、医療と重い病気への備えを基本レベルに抑え、万一の生活保障を重視したプランです。",
       deathLumpsum: 500, deathAnnuity: 10, disabilityLumpsum: 1000, disabilityMonthly: 20,
       medicalDaily: 3000, medicalSurgery: 0, criticalCancer: 100, criticalCirculatory: 0, // ★ がん100, 循環器0に修正

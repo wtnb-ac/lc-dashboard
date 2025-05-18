@@ -146,3 +146,80 @@ export const medicalExpenseDetailHtml = `
    <button class="close-concierge-button mt-2 text-sm w-full bg-gray-200 text-gray-700 py-1 rounded hover:bg-gray-300 transition-colors duration-200">閉じる</button>
 </div>
 `;
+
+export const otherContractGuideHtml = `
+<div class="p-3 text-sm space-y-4">
+  <h4 class="text-base font-bold text-emerald-800 mb-3 border-b border-emerald-200 pb-1.5 flex items-center">
+    <i class="fas fa-file-import mr-2.5 text-emerald-600"></i>他社保険の情報を入力
+  </h4>
+  <p class="text-xs text-gray-700">
+    ご加入中の他社保険について、以下の情報を入力いただくと、より正確なプランのご提案や比較が可能になります。
+  </p>
+  <div class="p-3 bg-sky-50 rounded-lg border border-sky-200 shadow-sm">
+    <h5 class="font-semibold text-sky-800 mb-2 text-sm"><i class="fas fa-list-alt mr-2"></i>主な入力項目リスト</h5>
+    <ul class="list-none space-y-1.5 text-xs text-gray-600">
+      <li class="flex items-center"><i class="fas fa-building w-4 text-center mr-2 text-sky-500"></i>保険会社名</li>
+      <li class="flex items-center"><i class="fas fa-shield-alt w-4 text-center mr-2 text-sky-500"></i>保険の種類 (例: 終身保険、医療保険)</li>
+      <li class="flex items-center"><i class="fas fa-yen-sign w-4 text-center mr-2 text-sky-500"></i>主な保障額 (例: 死亡保障 1,000万円)</li>
+      <li class="flex items-center"><i class="fas fa-calendar-alt w-4 text-center mr-2 text-sky-500"></i>保険期間・払込期間</li>
+      <li class="flex items-center"><i class="fas fa-wallet w-4 text-center mr-2 text-sky-500"></i>毎月の保険料</li>
+    </ul>
+  </div>
+  <p class="text-xs text-gray-500 mt-2">
+    <i class="fas fa-info-circle mr-1 text-gray-400"></i>お手元に保険証券をご用意いただくとスムーズにご入力いただけます。
+  </p>
+  <div class="p-3 bg-teal-50 rounded-lg border border-teal-200 shadow-sm mt-3">
+    <h5 class="font-semibold text-teal-800 mb-1.5 text-sm"><i class="fas fa-camera-retro mr-2 text-teal-600"></i>カンタン登録！OCR機能</h5>
+    <p class="text-xs text-gray-700 leading-relaxed">
+      お手持ちの保険証券をスマートフォンで撮影してアップロードするだけで、AIが内容を自動解析し、カンタンに登録できます！
+    </p>
+  </div>
+  <div class="mt-4">
+    <button class="w-full bg-amber-400 hover:bg-amber-300 text-emerald-900 font-semibold py-2 px-3 rounded-md shadow hover:shadow-md transition-all duration-200 text-sm flex items-center justify-center">
+      <i class="fas fa-keyboard mr-2"></i>入力フォームを開く (開発中)
+    </button>
+    <button class="close-concierge-button mt-2 text-sm w-full bg-gray-200 text-gray-700 py-1.5 rounded hover:bg-gray-300 transition-colors duration-200">今はしない</button>
+  </div>
+</div>
+`;
+
+export const coverageDetailGuideHtmlTemplate = `
+<div class="p-3 text-sm space-y-3">
+  <h4 class="text-base font-bold text-emerald-800 mb-3 border-b border-emerald-200 pb-1.5 flex items-center">
+    <i class="{{iconClass}} mr-2.5 text-emerald-600"></i>「{{itemName}}」について
+  </h4>
+  
+  {{#if itemValueString}}
+  <p class="text-sm text-gray-700">
+    現在ご加入中の「{{itemName}}」の保障額は <strong class="text-emerald-700 text-md">{{itemValueString}}</strong> です。
+  </p>
+  {{else}}
+  <p class="text-sm text-gray-600 italic">
+    現在「{{itemName}}」の保障は登録されていません。
+  </p>
+  {{/if}}
+
+  <div class="p-3 bg-green-50 rounded-lg border border-green-200 shadow-sm">
+    <h5 class="font-semibold text-green-800 mb-1.5 text-sm"><i class="fas fa-question-circle mr-2"></i>どんな保障なの？</h5>
+    <p class="text-xs text-gray-600 leading-relaxed">
+      {{itemDescription}}
+    </p>
+  </div>
+
+  {{#if itemTips}}
+  <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200 shadow-sm mt-2">
+    <h5 class="font-semibold text-yellow-800 mb-1.5 text-sm"><i class="fas fa-lightbulb mr-2"></i>ワンポイントアドバイス</h5>
+    <p class="text-xs text-gray-600 leading-relaxed">
+      {{itemTips}}
+    </p>
+  </div>
+  {{/if}}
+
+  <div class="mt-4 space-y-2">
+    <button class="w-full bg-sky-500 hover:bg-sky-600 text-white font-medium py-1.5 px-3 rounded-md shadow hover:shadow-md transition-all duration-200 text-xs flex items-center justify-center">
+      <i class="fas fa-calculator mr-2"></i>必要保障額をシミュレーション (開発中)
+    </button>
+    <button class="close-concierge-button text-sm w-full bg-gray-200 text-gray-700 py-1 rounded hover:bg-gray-300 transition-colors duration-200">詳しく分かった！</button>
+  </div>
+</div>
+`;

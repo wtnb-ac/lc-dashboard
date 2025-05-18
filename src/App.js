@@ -2,23 +2,23 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 
 // Import components
 // 作成したコンポーネントをインポート
-import CustomerHeader from './components/CustomerHeader';
-import CurrentContracts from './components/CurrentContracts';
-import CoverageRadarChart from './components/CoverageRadarChart';
-import PlanDetails from './components/PlanDetails';
-import SimulationSliders from './components/SimulationSliders';
-import Timeline from './components/Timeline';
-import AiConcierge from './components/AiConcierge';
+import CustomerHeader from './components/CustomerHeader.jsx';
+import CurrentContracts from './components/CurrentContracts.jsx';
+import CoverageRadarChart from './components/CoverageRadarChart.jsx';
+import PlanDetails from './components/PlanDetails.jsx';
+import SimulationSliders from './components/SimulationSliders.jsx';
+import Timeline from './components/Timeline.jsx';
+import AiConcierge from './components/AiConcierge.jsx';
 
 // Import Font Awesome CSS if not globally included (optional)
 // Font Awesome CSS をグローバルに含まれていない場合にインポート（オプション）
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 // Import constants
-import { initialCustomerData } from './constants/customerData';
+import { initialCustomerData } from './constants/customerData.js';
 // Import other constants
-import { timelineEvents } from './constants/timelineEvents';
-import { profileEditorHtml } from './constants/aiContent'; // Remove notification related imports here
+import { timelineEvents } from './constants/timelineEvents.js';
+import { profileEditorHtml } from './constants/aiContent.js'; // Remove notification related imports here
 
 // Import utils
 /*
@@ -98,108 +98,141 @@ function App() {
     toggleAiConcierge,
     handleCloseAiConcierge,
     updateAiMessage,
-  } = useAiConcierge(); // Pass initial message if needed, e.g., 'こんにちは！'
+    showOtherContractGuide,    // useAiConcierge から取得
+    showCoverageDetailGuide, // useAiConcierge から取得
+  } = useAiConcierge();
 
   const {
     notificationCount,
     handleShowNotifications,
-    handleShowNotificationDetail,
-    showNotificationListHandler, // Use the renamed handler from the hook
-  } = useNotifications(updateAiMessage, initialCustomerData.profile); // Pass updateAiMessage and customer profile
+    showNotificationListHandler, 
+  } = useNotifications(updateAiMessage, initialCustomerData.profile);
 
-  // Initialize the new hook
-  const {
-    simulatedData, // Get state from the hook
-    currentPlanContext, // Get state from the hook
-    loadPlan, // Get function from the hook
-    handleSliderChange // Get function from the hook
-  } = usePlanSimulation(
-    initialCustomerData.initialSimulationData, // Pass initial simulation data
-    initialCustomerData, // Pass all initial customer data (needed for loading plans)
-    updateAiMessage // Pass the AI message generator function
-  );
-
-  // Call the new hook to get calculated radar data
-  const radarData = useRadarChartData(simulatedData, currentPlanContext, initialCustomerData);
-  const {
-      indicatorsConfig, // Get indicatorsConfig from the hook now
-      requiredRadarData,
-      currentRadarData,
-      simulatedRadarData,
-      combinedCurrentCoverage,
-      premiumBreakdownText,
-      mainGapText,
-      mainGapClass
-  } = radarData;
-
-  // --- Function to update AI message content ---
+  // generateAndSetAiMessage の定義を usePlanSimulation より前に移動
   const generateAndSetAiMessage = useCallback((context, data = null) => {
     let output = '';
     const userName = initialCustomerData.profile.name;
-    const planKey = typeof data === 'string' ? data : currentPlanContext; // Get the correct plan key
-
-    // Define plan descriptions based on user input
+    // currentPlanContext はこのスコープでは直接利用できないため、
+    // data から取得するか、plan_select や slider_adjust の場合は data が planKey や indicatorName を持つことを期待
+    let planKey = null;
+    let planName = 'プラン';
+    let description = '';
     const planDescriptions = {
       recommended: 'バランスよくカバーし、既契約を考慮して必要保障額を満たすように調整。保険料を抑えつつ、医療と重い病気は基本的な保障（入院日額、重病一時金100万円など）を確保したプランです。',
-      planA: '必要となる保障を高水準で備え、万全を期すプランです。がんや循環器疾患への備えも手厚く、入院一時金も付いているため短期的な費用にも安心です。',
-      planC_DeathFocus: '保険料を抑えつつ、万一・就業不能時の家族の生活費を重視。死亡・就業不能保障は維持し、医療と重い病気の保障を基本的な内容に絞ったプランです。',
-      planB_MedicalFocus: '保険料を抑えつつ、医療や重い病気への備えを重視。基本的な医療保障は維持し、死亡・就業不能保障額を調整したプランです。',
-      custom: 'これはスライダーで調整されたあなただけのカスタムプランです。保障内容をご確認ください。' // Description for custom plan
+      premier: '必要となる保障を高水準で備え、万全を期すプランです。がんや循環器疾患への備えも手厚く、入院一時金も付いているため短期的な費用にも安心です。',
+      lifeProtectionFocus: '保険料を抑えつつ、万一・就業不能時の家族の生活費を重視。死亡・就業不能保障は維持し、医療と重い病気の保障を基本的な内容に絞ったプランです。',
+      medicalFocus: '保険料を抑えつつ、医療や重い病気への備えを重視。基本的な医療保障は維持し、死亡・就業不能保障額を調整したプランです。',
+      custom: 'これはスライダーで調整されたあなただけのカスタムプランです。保障内容をご確認ください。'
     };
+    let planDataKey = null;
 
-    let planDataKey;
-    switch (planKey) {
-      case 'recommended': planDataKey = 'recommendedPlanData'; break;
-      case 'planA': planDataKey = 'planAData'; break;
-      case 'planB_MedicalFocus': planDataKey = 'planB_MedicalFocusData'; break;
-      case 'planC_DeathFocus': planDataKey = 'planC_DeathFocusData'; break;
-      case 'custom': planDataKey = null; break;
-      default: planDataKey = null;
+    if (context === 'plan_select') {
+        planKey = typeof data === 'string' ? data : null;
+    } else if (context === 'slider_adjust') {
+        planKey = 'custom'; // スライダー調整時はカスタムプラン扱い
+    } else if (context === 'init') {
+        planKey = 'recommended'; // 初期表示は推奨プラン
+    }
+    // 他の context の場合は planKey が直接必要ないか、data 経由で処理
+
+    if (planKey) {
+        switch (planKey) {
+            case 'recommended': planDataKey = 'recommendedPlanData'; break;
+            case 'premier': planDataKey = 'planAData'; break;
+            case 'medicalFocus': planDataKey = 'planB_MedicalFocusData'; break;
+            case 'lifeProtectionFocus': planDataKey = 'planC_DeathFocusData'; break;
+            case 'custom': planDataKey = null; break; // カスタムプランは initialCustomerData に直接的なデータなし
+            default: planDataKey = null;
+        }
+        const planInfo = planKey === 'custom' ? { name: "カスタムプラン" } : initialCustomerData[planDataKey];
+        planName = planInfo?.name || 'プラン';
+        description = planDescriptions[planKey] || planDescriptions.custom;
     }
 
-    const planInfo = planKey === 'custom'
-      ? { name: "カスタムプラン" }
-      : initialCustomerData[planDataKey];
 
-    const planName = planInfo?.name || 'プラン'; // Default name
-    const indicatorName = (typeof data === 'object' && data !== null) ? data.name : '項目';
+    const indicatorName = (context === 'slider_adjust' && typeof data === 'object' && data !== null) ? data.name : '項目';
 
-    // Select the correct description
-    let description = planDescriptions[planKey] || planDescriptions.custom; // Fallback to custom or a default
 
     switch (context) {
       case 'init':
         const initialPlanName = initialCustomerData.recommendedPlanData?.name || '推奨プラン';
         const initialDescription = planDescriptions['recommended'];
-        output = `<p>${userName}さん、こんにちは！<img src="pentan.png" alt="ペンタン" class="pentan-icon h-4 inline-block ml-1"></p>`;
-        output += `<p class="text-xs mt-1">現在の提案は「<strong>${initialPlanName}</strong>」です。</p>`;
-        output += `<div class="story-quote text-xs mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">${initialDescription}</div>`;
-        output += `<p class="text-xs mt-2">右側の詳細やスライダーで内容を確認・調整できますよ😊</p>`;
+        output = `<div class="flex items-start gap-2.5 mb-2">
+                    <img src="/pentan.png" alt="ペンタン" class="pentan-avatar h-10 w-10 rounded-full border-2 border-white shadow-md" />
+                    <div>
+                      <p class="font-semibold text-sky-700">${userName}さん、こんにちは！</p>
+                      <p class="text-xs text-gray-600 leading-tight mt-0.5">現在のプランは「<strong>${initialPlanName}</strong>」だよ。</p>
+                    </div>
+                  </div>`;
+        output += `<div class="story-quote text-xs mt-2 p-3 bg-gradient-to-r from-sky-50 to-blue-50 border-l-4 border-sky-400 rounded-r-lg shadow-sm">
+                     <h5 class="font-semibold text-sky-800 text-sm mb-1"><i class="fas fa-lightbulb mr-1.5 text-yellow-400"></i>このプランの特徴</h5>
+                     <p class="text-gray-700 leading-relaxed">${initialDescription}</p>
+                   </div>`;
+        output += `<p class="text-xs text-gray-600 mt-3 text-center">右側の詳細やスライダーで、もっと自分にピッタリのプランに調整してみてね！<i class="fas fa-sliders-h ml-1.5 text-sky-500"></i></p>`;
         break;
       case 'plan_select':
-          output = `<p>「<strong>${planName}</strong>」を表示しますね！<img src="pentan.png" alt="ペンタン" class="pentan-icon h-4 inline-block ml-1">✨</p>`;
-          output += `<div class="story-quote text-xs mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">${description}</div>`;
-          output += `<p class="text-xs mt-2">保障内容と月額保険料をご確認ください。</p>`;
-          break;
+          const selectedPlanData = planDataKey ? initialCustomerData[planDataKey] : {};
+          const protectionPremium = selectedPlanData.protectionPremium || 0;
+          const savingsPremium = selectedPlanData.savingsPremium || 0;
+          const totalPremium = selectedPlanData.totalPremium || (protectionPremium + savingsPremium);
+          output = `<div class="flex items-start gap-2.5 mb-3">
+                      <img src="/pentan.png" alt="ペンタン" class="pentan-avatar h-12 w-12 rounded-full border-2 border-white shadow-lg" />
+                      <div>
+                        <p class="font-bold text-lg text-sky-700">ジャーン！<i class="fas fa-wand-magic-sparkles ml-1.5 text-yellow-400"></i></p>
+                        <p class="text-sm text-gray-700 leading-tight mt-0.5">「<strong>${planName}</strong>」の準備ができたよ！</p>
+                      </div>
+                    </div>`;
+          output += `<div class="ai-card bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 p-3.5 rounded-xl shadow-md border border-sky-200">
+                       <div class="flex items-center gap-2 mb-2.5 pb-2 border-b border-sky-200">
+                         <i class="fas fa-file-invoice-dollar text-2xl text-sky-600"></i>
+                         <div>
+                            <h5 class="font-extrabold text-sky-800 text-md">${planName}</h5>
+                            <p class="text-xs text-sky-600 font-medium">${selectedPlanData.benefitKeywords && selectedPlanData.benefitKeywords.length > 0 ? selectedPlanData.benefitKeywords.slice(0,2).map(k => '#${k}').join(' ') : 'あなたに合わせたプラン'}</p>
+                         </div>
+                       </div>
+                       <div class="text-xs text-gray-700 space-y-1.5 mb-3 px-1 leading-relaxed">
+                         ${description.split('。').map(sentence => sentence.trim() && `<p class="flex items-start"><i class="fas fa-check-double mr-2 mt-1 text-sky-500"></i><span>${sentence}。</span></p>`).join('')}
+                       </div>
+                       <div class="premium-breakdown bg-white/70 p-2.5 rounded-lg shadow-inner border border-sky-100">
+                         <h6 class="text-xs font-semibold text-sky-700 mb-1.5 flex items-center"><i class="fas fa-wallet mr-1.5 text-sky-500"></i>毎月の保険料（目安）</h6>
+                         <p class="text-center text-sm mb-1">
+                           <span class="font-bold text-sky-800 text-lg">${totalPremium.toLocaleString()}</span> 円
+                         </p>
+                         <div class="text-xs flex justify-around text-center">
+                           <div>
+                             <span class="text-gray-500 block">保障</span>
+                             <strong class="text-blue-600">${protectionPremium.toLocaleString()} 円</strong>
+                           </div>
+                           <div>
+                             <span class="text-gray-500 block">貯蓄</span>
+                             <strong class="text-amber-600">${savingsPremium.toLocaleString()} 円</strong>
+                           </div>
+                         </div>
+                       </div>
+                     </div>`;
+          output += `<p class="text-sm text-gray-700 mt-4 text-center px-2">じっくり確認して、不明な点は何でも聞いてね！ <i class="far fa-comment-dots ml-1.5 text-sky-500"></i></p>`;
+        break;
       case 'slider_adjust':
           const customDescription = planDescriptions['custom'];
-          output = `<p>「${indicatorName}」を調整中...<img src="pentan.png" alt="ペンタン" class="pentan-icon h-4 inline-block ml-1">✍️</p>`;
-          output += `<div class="story-quote text-xs mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded">${customDescription}</div>`;
-          output += `<p class="text-xs mt-1">全体のバランスを見ながら調整しましょう。</p>`;
+          output = `<div class="flex items-start gap-2.5 mb-1">
+                      <img src="/pentan.png" alt="ペンタン" class="pentan-avatar h-8 w-8 rounded-full border-2 border-white shadow-sm" />
+                      <p class="text-sm font-medium text-sky-700">「${indicatorName}」を調整中だね！<i class="fas fa-pencil-alt ml-1.5 text-amber-500"></i></p>
+                    </div>`;
+          output += `<div class="story-quote text-xs mt-1.5 p-2.5 bg-gradient-to-r from-sky-50 to-blue-50 border-l-4 border-sky-300 rounded-r-md shadow-sm">
+                       <p class="text-gray-700 leading-relaxed">${customDescription}</p>
+                     </div>`;
+          output += `<p class="text-xs text-gray-600 mt-2 text-center">全体のバランスを見ながら、ピッタリを目指そう！<i class="fas fa-palette ml-1 text-purple-500"></i></p>`;
           break;
       case 'timeline_event':
         const eventData = timelineEvents[data];
         output = `<p>タイムライン「${eventData?.title || 'イベント'}」<img src="pentan.png" alt="ペンタン" class="pentan-icon h-4 inline-block ml-1"></p>${eventData?.details ? `<div class="ai-timeline-details text-xs mt-1">${eventData.details}</div>` : '<p class="text-xs mt-1">詳細を確認します。</p>'}`;
         break;
-      case 'register_contract':
-         output = `<p>現在の加入状況を登録・更新しますか？<img src="pentan.png" alt="ペンタン" class="pentan-icon h-4 inline-block ml-1">📝</p><p class="text-xs mt-1">保障内容をより正確に把握するために重要です。</p>`;
-         break;
       case 'axis_info':
           const axisName = data?.name || 'グラフ軸';
           output = `<p><strong>${axisName}</strong> についてですね！<img src="pentan.png" alt="ペンタン" class="pentan-icon h-4 inline-block ml-1">📊</p><p class="text-xs mt-1">${data?.tooltipText || 'この項目は、必要保障額や推奨される質に対する充足度を示しています。'}</p>`;
           break;
-      case 'benefit_details':
-          const benefitName = data?.label || '保障'; // Use label if available
+      case 'benefit_details': 
+          const benefitName = data?.label || '保障';
           const benefitDesc = data?.description || '保障内容の詳細を表示します。';
           output = `<p><strong>${benefitName}</strong> の詳細情報ですね！<img src="pentan.png" alt="ペンタン" class="pentan-icon h-4 inline-block ml-1">🔍</p>`;
           if(data?.value !== undefined && data?.unit !== undefined) {
@@ -213,53 +246,61 @@ function App() {
           break;
       default: output = `<p>何かお手伝いできることはありますか？<img src="pentan.png" alt="ペンタン" class="pentan-icon h-4 inline-block ml-1"></p>`;
     }
-    updateAiMessage(output); // Call the hook's function to update state and open concierge
-  }, [updateAiMessage, currentPlanContext, simulatedData]); // Dependencies updated
+    updateAiMessage(output);
+  }, [updateAiMessage]); // 依存配列から currentPlanContext を削除
 
-  // --- Event Handlers and Callbacks ---
+  const {
+    simulatedData,
+    currentPlanContext, // ここで currentPlanContext を取得
+    loadPlan,
+    handleSliderChange
+  } = usePlanSimulation(
+    initialCustomerData.initialSimulationData,
+    initialCustomerData,
+    generateAndSetAiMessage // ここで渡す
+  );
 
-  // Toggle AI Concierge visibility (Provided by useAiConcierge)
-  // const toggleAiConcierge = useCallback(() => { ... }, []); // Removed
-
-  // Handle closing AI Concierge (Provided by useAiConcierge)
-  // const handleCloseAiConcierge = useCallback(() => { ... }, []); // Removed
+  const radarData = useRadarChartData(simulatedData, currentPlanContext, initialCustomerData);
+  const {
+      indicatorsConfig,
+      requiredRadarData,
+      currentRadarData,
+      simulatedRadarData,
+      combinedCurrentCoverage,
+      premiumBreakdownText,
+      mainGapText,
+      mainGapClass
+  } = radarData;
 
   const handleRegisterContract = useCallback(() => {
-    generateAndSetAiMessage('register_contract');
-  }, [generateAndSetAiMessage]);
+    showOtherContractGuide();
+  }, [showOtherContractGuide]);
 
   const handleAxisLabelClick = useCallback((indicator) => {
     generateAndSetAiMessage('axis_info', indicator);
   }, [generateAndSetAiMessage]);
 
   const handleBenefitClick = useCallback((benefitInfo) => {
-    console.log("Benefit clicked:", benefitInfo);
-    // Pass the more detailed benefit info object
+    console.log("Benefit clicked (from PlanDetails or similar):", benefitInfo);
     generateAndSetAiMessage('benefit_details', benefitInfo);
   }, [generateAndSetAiMessage]);
 
+  const handleCurrentCoverageItemClick = useCallback((item) => {
+    showCoverageDetailGuide(item); 
+  }, [showCoverageDetailGuide]);
+
   const handleConditionWarningClick = useCallback((conditionInfo) => {
-    console.log("Condition warning clicked:", conditionInfo);
     generateAndSetAiMessage('condition_info_short_stay', conditionInfo);
   }, [generateAndSetAiMessage]);
 
-  // --- NEW Handler for Profile Editor (Uses imported constant and hook's function) ---
   const handleShowProfileEditor = useCallback(() => {
-    updateAiMessage(profileEditorHtml); // Use hook's function directly
+    updateAiMessage(profileEditorHtml); 
   }, [updateAiMessage]);
-
-  // --- Handlers for Notifications (Provided by useNotifications) ---
-  // const showNotificationList = useCallback(() => { ... }, []); // Removed (renamed in hook)
-  // const handleShowNotifications = useCallback(() => { ... }, []); // Removed
-  // const handleShowNotificationDetail = useCallback((notificationId) => { ... }, []); // Removed
 
   const handleTimelineEventClick = useCallback((eventId) => {
     setActiveTimelineEventId(eventId);
     generateAndSetAiMessage('timeline_event', eventId);
   }, [generateAndSetAiMessage]);
-
-  // --- Calculate Derived State for Radar Chart and Summaries ---
-  // const { ... } = useMemo(() => { ... }); // Calculation logic moved to useRadarChartData hook
 
   const timelineEventDetailsContent = useMemo(() => {
     if (activeTimelineEventId !== null && timelineEvents[activeTimelineEventId]) {
@@ -269,60 +310,56 @@ function App() {
   }, [activeTimelineEventId]);
 
   useEffect(() => {
-    generateAndSetAiMessage('init'); // Use the generate function on initial load
-  }, [generateAndSetAiMessage]);
+    generateAndSetAiMessage('init');
+  }, [generateAndSetAiMessage]); 
 
   const getOfficialPlanDataKey = (context) => {
     switch (context) {
       case 'recommended': return 'recommendedPlanData';
-      case 'planA': return 'planAData';
-      case 'planB_MedicalFocus': return 'planB_MedicalFocusData';
-      case 'planC_DeathFocus': return 'planC_DeathFocusData';
+      case 'premier': return 'planAData';
+      case 'medicalFocus': return 'planB_MedicalFocusData';
+      case 'lifeProtectionFocus': return 'planC_DeathFocusData';
       default: return null;
     }
   };
   const officialPlanDataKey = getOfficialPlanDataKey(currentPlanContext);
   const officialPlanDataForDetails = officialPlanDataKey ? initialCustomerData[officialPlanDataKey] : null;
 
-  // --- JSX Structure ---
   return (
     <div className="dashboard-container max-w-7xl mx-auto my-2 p-1 bg-gray-100 shadow-lg rounded-lg font-sans relative">
       <CustomerHeader
-        customerProfile={initialCustomerData.profile} // Use initialCustomerData directly
-        onToggleAiConcierge={toggleAiConcierge} // Use hook's function
-        onShowProfileEditor={handleShowProfileEditor} // Use updated handler
-        onShowNotifications={handleShowNotifications} // Use hook's function
-        notificationCount={notificationCount} // Use hook's state
+        customerProfile={initialCustomerData.profile} 
+        onToggleAiConcierge={toggleAiConcierge} 
+        onShowProfileEditor={handleShowProfileEditor} 
+        onShowNotifications={showNotificationListHandler} 
+        notificationCount={notificationCount} 
       />
       <main className="dashboard-main p-2 md:p-3">
-        {/* 3-Column Layout */}
         <div className="main-content-columns flex flex-col lg:flex-row flex-wrap gap-3 mb-3">
-          {/* Left Column */}
           <div className="left-column w-full lg:w-1/4 min-w-[280px] flex flex-col">
             <CurrentContracts
-              currentCoverageSelf={initialCustomerData.currentCoverageSelf} // Use initialCustomerData directly
-              currentCoverageOther={initialCustomerData.currentCoverageOther} // Use initialCustomerData directly
-              onRegisterContract={handleRegisterContract} // Use updated handler
-              onConditionWarningClick={handleConditionWarningClick} // Use updated handler
+              currentCoverageSelf={initialCustomerData.currentCoverageSelf} 
+              currentCoverageOther={initialCustomerData.currentCoverageOther} 
+              onRegisterContract={handleRegisterContract} 
+              onConditionWarningClick={handleConditionWarningClick} 
+              onShowCoverageItemGuide={handleCurrentCoverageItemClick} 
             />
           </div>
-          {/* Center Column - Adjusted flex basis */}
           <div className="center-column w-full lg:flex-[1.5] min-w-[380px] flex flex-col">
-            {/* --- Conditional Rendering for CoverageRadarChart (Uses imported indicatorsConfig) --- */}
-            {(indicatorsConfig && indicatorsConfig.length > 0 && // Now uses indicatorsConfig from hook
+            {(indicatorsConfig && indicatorsConfig.length > 0 && 
               requiredRadarData && requiredRadarData.length > 0 &&
               currentRadarData && currentRadarData.length > 0 &&
               simulatedRadarData && simulatedRadarData.length > 0
               ) ? (
               <CoverageRadarChart
-                indicatorsConfig={indicatorsConfig} // Pass indicatorsConfig from hook
+                indicatorsConfig={indicatorsConfig} 
                 requiredData={requiredRadarData}
                 currentData={currentRadarData}
                 simulatedData={simulatedRadarData}
-                originalRequiredCoverage={initialCustomerData.requiredCoverageBenchmark} // Use initialCustomerData directly
+                originalRequiredCoverage={initialCustomerData.requiredCoverageBenchmark} 
                 originalCurrentCoverage={combinedCurrentCoverage}
                 originalSimulatedPlanData={simulatedData}
-                customerProfile={initialCustomerData.profile} // Use initialCustomerData directly
+                customerProfile={initialCustomerData.profile} 
                 onAxisLabelClick={handleAxisLabelClick}
                 premiumBreakdownText={premiumBreakdownText}
                 mainGapText={mainGapText}
@@ -334,48 +371,43 @@ function App() {
               </div>
             )}
           </div>
-          {/* Right Column - Adjusted flex basis */}
           <div className="right-column w-full lg:flex-[1.5] min-w-[400px] flex flex-col gap-4">
             <PlanDetails
               planData={simulatedData}
               currentPlanContext={currentPlanContext}
               officialPlanData={officialPlanDataForDetails}
-              userTags={initialCustomerData.profile.tags} // Use initialCustomerData directly
-              onLoadPlan={loadPlan} // Use updated handler
-              onBenefitClick={handleBenefitClick} // Use updated handler
+              userTags={initialCustomerData.profile.tags} 
+              onLoadPlan={loadPlan} 
+              onBenefitClick={handleBenefitClick} 
             />
           </div>
         </div>
 
-        {/* --- Timeline Section (Moved Here) --- */}
         <div className="timeline-section-wrapper mt-4">
           <Timeline
-              timelineEvents={timelineEvents} // Use imported
+              timelineEvents={timelineEvents} 
               activeEventId={activeTimelineEventId}
-              onEventClick={handleTimelineEventClick} // Use updated handler
+              onEventClick={handleTimelineEventClick} 
               eventDetailsContent={timelineEventDetailsContent}
             />
         </div>
 
-        {/* Content Below Columns */}
         <div className="below-columns-content mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <SimulationSliders
             simulatedData={simulatedData}
-            onSliderChange={handleSliderChange} // Use updated handler
+            onSliderChange={handleSliderChange} 
           />
-          {/* Placeholder for PLY and Future Planning */}
           <section className="ply-recommendation module bg-white border border-gray-200 rounded-md p-4 shadow-sm flex flex-col">
             <h2 className="text-xl font-bold text-green-800 border-b-2 border-green-800 pb-1 mb-3 flex items-center">
               <i className="fas fa-users mr-2"></i> みんなの選択 (PLY)
             </h2>
             <div className="text-xs text-gray-600 mb-3">
               <i className="fas fa-user-check mr-1 text-blue-500"></i>
-              <strong>{initialCustomerData.plyData.matchedAttributes?.join('・') || 'あなたと似た属性の方々'}</strong> の傾向： {/* Use initialCustomerData directly */}
+              <strong>{initialCustomerData.plyData.matchedAttributes?.join('・') || 'あなたと似た属性の方々'}</strong> の傾向： 
             </div>
 
-            {/* --- NEW PLY Summary Display (Uses imported initialCustomerData) --- */}
             <div className="ply-summary-container space-y-4 mb-4">
-              {initialCustomerData.plyData.summary?.map((categoryData, catIndex) => ( /* Use initialCustomerData directly */
+              {initialCustomerData.plyData.summary?.map((categoryData, catIndex) => ( 
                 <div key={catIndex} className="ply-category-section bg-gray-50 border border-gray-200 rounded-lg p-3">
                   <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center">
                     <i className={`${categoryData.icon || 'fa-solid fa-info-circle'} mr-2 text-green-700`}></i>
@@ -389,7 +421,6 @@ function App() {
                             <i className={`${section.icon || 'fa-solid fa-check'} w-4 text-center mr-1.5 text-gray-500`}></i>
                             {section.title}
                           </span>
-                          {/* Join Rate Visualization (Simple Bar) */}
                           <div className="flex items-center space-x-1" title={`加入率: ${section.joinRate}%`}>
                             <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
                               <div className="h-full bg-blue-500 rounded-full" style={{ width: `${section.joinRate}%` }}></div>
@@ -402,7 +433,6 @@ function App() {
                           <strong className="text-indigo-700">{section.averageValue.amount.toLocaleString()} {section.averageValue.unit}</strong>
                           {section.commonMethod && <span className="text-gray-500 text-[10px] ml-1"> ({section.commonMethod})</span>}
                         </div>
-                        {/* Thinking Point (Tips) */}
                         <p className="text-xs text-gray-500 bg-yellow-50 border border-yellow-200 rounded p-1.5 pl-5 relative before:content-['💡'] before:absolute before:left-1.5 before:top-1.5">
                           {section.thinkingPoint}
                         </p>
@@ -415,7 +445,7 @@ function App() {
 
             <div className="mb-4 space-y-3">
               <h3 className="text-sm font-semibold text-gray-700 mb-2">こんな声も届いています</h3>
-              {initialCustomerData.plyData.voices?.slice(0, 2).map((voice, index) => ( /* Use initialCustomerData directly */
+              {initialCustomerData.plyData.voices?.slice(0, 2).map((voice, index) => ( 
                 <div key={index} className="ply-voice-card text-xs bg-white border border-gray-200 p-3 rounded-lg shadow-sm">
                   <blockquote className="italic mb-1.5 text-gray-700 border-l-4 border-blue-300 pl-3">
                     <i className={`${voice.icon || 'fa-regular fa-comment'} mr-1.5 text-blue-500`}></i>
@@ -430,9 +460,8 @@ function App() {
             <div className="mt-auto pt-3 border-t border-dashed border-gray-200">
               <p className="text-xs text-gray-700 leading-relaxed">
                 <i className="fas fa-compass mr-1.5 text-emerald-600"></i>
-                <strong>考え方のヒント：</strong> {initialCustomerData.plyData.guidance} {/* Use initialCustomerData directly */}
+                <strong>考え方のヒント：</strong> {initialCustomerData.plyData.guidance} 
               </p>
-              {/* Action buttons (example) */}
               <div className="mt-3 text-right space-x-2">
                   <button className="text-xs py-1 px-2 border border-green-600 text-green-700 rounded hover:bg-green-50 transition-colors">詳しく聞く</button>
                   <button className="text-xs py-1 px-2 border border-indigo-600 text-indigo-700 rounded hover:bg-indigo-50 transition-colors">シミュレーションで試す</button>
@@ -443,17 +472,16 @@ function App() {
             <h2 className="text-xl font-bold text-green-800 border-b-2 border-green-800 pb-1 mb-3 flex items-center">
               <i className="fas fa-seedling mr-2"></i> 将来のライフプランニング
             </h2>
-            <p id="future-suggestion" className='text-sm'>{initialCustomerData.futureSuggestionText}</p> {/* Use initialCustomerData directly */}
+            <p id="future-suggestion" className='text-sm'>{initialCustomerData.futureSuggestionText}</p> 
           </section>
         </div>
       </main>
-      {/* Render AI Concierge */}
       <AiConcierge
-        isOpen={isAiConciergeOpen} // Use hook's state
-        onClose={handleCloseAiConcierge} // Use hook's function
-        messageContent={aiMessage} // Use hook's state
-        onNotificationCardClick={handleShowNotificationDetail} // Pass hook's function
-        onBackToList={showNotificationListHandler} // Pass hook's (renamed) function
+        isOpen={isAiConciergeOpen} 
+        onClose={handleCloseAiConcierge} 
+        messageContent={aiMessage} 
+        onNotificationCardClick={showNotificationListHandler} 
+        onBackToList={showNotificationListHandler} 
       />
     </div>
   );

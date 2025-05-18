@@ -77,28 +77,26 @@ function AiConcierge({ isOpen, onClose, messageContent, onNotificationCardClick,
     <div
       id="ai-concierge-window"
       // Fixed positioning classes
-      className={`fixed bottom-5 right-5 w-[380px] max-h-[calc(100vh-100px)] \
-                  bg-emerald-50 border border-emerald-200 rounded-2xl shadow-xl z-[1000] \
+      className={`fixed bottom-6 right-6 w-[390px] max-h-[calc(100vh-120px)] \
+                  bg-gradient-to-br from-sky-100 to-blue-100 border-2 border-sky-300 rounded-3xl shadow-2xl z-[1000] \
                   flex flex-col overflow-hidden transition-all duration-300 ease-in-out \
-                  ${isOpen ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95 pointer-events-none'}`}
+                  ${isOpen ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-5 scale-95 pointer-events-none'}`}
       style={{ transformOrigin: 'bottom right' }} // Adjust transform origin for bottom-right scaling
     >
       {/* Header with Close Button */}
       {/* 閉じるボタン付きヘッダー */}
-      <div className="ai-header flex justify-between items-center p-2.5 px-4 bg-green-800 text-white rounded-t-xl flex-shrink-0">
-        <h2 className="m-0 text-base font-bold flex items-center gap-2">
-          {/* <img src={pentanIcon} alt="ペンタン" className="pentan-icon header-icon h-5 w-auto" /> */}
-          <img src="pentan.png" alt="ペンタン" className="pentan-icon header-icon h-5 w-auto" /> {/* 代替 */}
-          サポート案内
+      <div className="ai-header flex justify-between items-center p-3 px-5 bg-gradient-to-r from-sky-500 to-blue-500 text-white rounded-t-[22px] flex-shrink-0 shadow-md">
+        <h2 className="m-0 text-lg font-bold flex items-center gap-2.5">
+          <img src="/pentan.png" alt="ペンタン" className="pentan-icon header-icon h-8 w-auto transform transition-transform duration-200 hover:scale-110" /> {/* ペンタンアイコンを大きく、ホバーエフェクト追加 */}
+          ペンタンにおまかせ！
         </h2>
         <button
           id="close-ai-window"
           onClick={onClose} // Use the passed onClose handler
           title="閉じる"
-          className="bg-transparent border-none text-xl cursor-pointer text-gray-300 hover:text-white p-1 leading-none focus:outline-none"
+          className="bg-transparent border-none text-2xl cursor-pointer text-sky-100 hover:text-white p-1 leading-none focus:outline-none rounded-full hover:bg-white/20 transition-colors"
         >
-          {/* <FontAwesomeIcon icon={faXmark} /> */}
-          <i className="fas fa-times"></i> {/* Alternative icon */}
+          <i className="fas fa-times-circle"></i> {/* より親和性のあるアイコンに変更 */}
         </button>
       </div>
 
