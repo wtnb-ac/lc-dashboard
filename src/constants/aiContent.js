@@ -188,8 +188,7 @@ export const coverageDetailGuideHtmlTemplate = `
   <h4 class="text-base font-bold text-emerald-800 mb-3 border-b border-emerald-200 pb-1.5 flex items-center">
     <i class="{{iconClass}} mr-2.5 text-emerald-600"></i>「{{itemName}}」について
   </h4>
-  
-  {{#if itemValueString}}
+
   <p class="text-sm text-gray-700">
     現在ご加入中の「{{itemName}}」の保障額は <strong class="text-emerald-700 text-md">{{itemValueString}}</strong> です。
   </p>
@@ -197,7 +196,7 @@ export const coverageDetailGuideHtmlTemplate = `
   <p class="text-sm text-gray-600 italic">
     現在「{{itemName}}」の保障は登録されていません。
   </p>
-  {{/if}}
+
 
   <div class="p-3 bg-green-50 rounded-lg border border-green-200 shadow-sm">
     <h5 class="font-semibold text-green-800 mb-1.5 text-sm"><i class="fas fa-question-circle mr-2"></i>どんな保障なの？</h5>
@@ -206,14 +205,13 @@ export const coverageDetailGuideHtmlTemplate = `
     </p>
   </div>
 
-  {{#if itemTips}}
   <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200 shadow-sm mt-2">
     <h5 class="font-semibold text-yellow-800 mb-1.5 text-sm"><i class="fas fa-lightbulb mr-2"></i>ワンポイントアドバイス</h5>
     <p class="text-xs text-gray-600 leading-relaxed">
       {{itemTips}}
     </p>
   </div>
-  {{/if}}
+
 
   <div class="mt-4 space-y-2">
     <button class="w-full bg-sky-500 hover:bg-sky-600 text-white font-medium py-1.5 px-3 rounded-md shadow hover:shadow-md transition-all duration-200 text-xs flex items-center justify-center">
@@ -221,5 +219,66 @@ export const coverageDetailGuideHtmlTemplate = `
     </button>
     <button class="close-concierge-button text-sm w-full bg-gray-200 text-gray-700 py-1 rounded hover:bg-gray-300 transition-colors duration-200">詳しく分かった！</button>
   </div>
+</div>
+`;
+
+export const richBenefitDetailGuideHtmlTemplate = `
+<div class="p-3.5 text-sm space-y-4 bg-white rounded-lg shadow-xl">
+  <div class="flex items-center justify-between pb-2 border-b border-gray-200">
+    <h4 class="text-lg font-bold text-emerald-700 flex items-center">
+      <i class="{{benefitIconClass}} mr-2.5 text-2xl"></i>
+      「{{benefitName}}」詳細ガイド
+    </h4>
+    <button class="close-concierge-button text-gray-400 hover:text-gray-600 text-xl"><i class="fas fa-times"></i></button>
+  </div>
+
+  <!-- 現在の設定値 -->
+  <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-200">
+    <p class="text-sm text-emerald-800">
+      現在のプラン「<strong>{{currentPlanName}}</strong>」での設定： 
+      <strong class="text-lg ml-1">{{currentValueString}}</strong>
+        <span class="text-xs text-emerald-700 ml-1"> ({{currentSubValueString}})</span>
+    </p>
+  </div>
+
+  <!-- 1. 必要性 -->
+  <div class="content-section">
+    <h5 class="section-title"><i class="fas fa-check-circle text-green-500 mr-2"></i>この保障の役割・必要性</h5>
+    <p class="section-text">{{necessityText}}</p>
+  </div>
+
+  <!-- 2. 設定している根拠 -->
+  <div class="content-section">
+    <h5 class="section-title"><i class="fas fa-bullseye text-red-500 mr-2"></i>設定の考え方・プランでの位置づけ</h5>
+    <p class="section-text"><strong>一般的な必要保障額の考え方：</strong><br>{{{rationaleTextGeneralHtml}}}</p>
+    <p class="section-text mt-1.5"><strong>「{{currentPlanName}}」での考え方：</strong><br>{{{rationaleTextPlanSpecificHtml}}}</p>
+      <p class="section-text mt-1.5"><strong>一時金と年金の役割：</strong><br>{{annuityLumpsumRoleText}}</p>
+  </div>
+
+  <!-- 4. 保険金額の変更イメージ -->
+  <div class="content-section">
+    <h5 class="section-title"><i class="fas fa-sliders-h text-purple-500 mr-2"></i>保障額の調整イメージ</h5>
+    <p class="text-xs text-gray-600 mb-2">現在の設定値「{{currentValueString}}」から変更する場合のイメージです。(実際のプランには反映されません)</p>
+    <div class="space-y-1.5 amount-options">
+      {{amountOptionsHTML}}
+    </div>
+    <p class="text-xs text-gray-500">※上記はあくまで目安です。全体のバランスや他の保障との組み合わせで変動します。</p>
+  </div>
+  
+  <style>
+    .content-section { background-color: #f9fafb; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom:12px; }
+    .section-title { font-size: 0.95rem; font-weight: 600; color: #374151; margin-bottom: 8px; display: flex; align-items: center; }
+    .section-text { font-size: 0.8rem; color: #4b5563; line-height: 1.6; }
+    .amount-options label { display: block; background-color: #fff; padding: 8px 10px; border-radius: 6px; border: 1px solid #d1d5db; cursor: pointer; transition: all 0.2s ease-in-out; }
+    .amount-options label:hover { border-color: #60a5fa; background-color: #eff6ff; }
+    .amount-options input[type="radio"] { display: none; }
+    .amount-options input[type="radio"]:checked + label { background-color: #3b82f6; border-color: #2563eb; color: white; font-weight: 500; }
+    .amount-options input[type="radio"]:checked + label .option-premium { color: #e0f2fe; }
+    .option-value { font-weight: 600; }
+    .option-premium { font-size: 0.7rem; color: #059669; margin-left: 8px; }
+    .custom-list { list-style: none; padding-left: 0; }
+    .custom-list li { display: flex; align-items: flex-start; margin-bottom: 4px; }
+    .custom-list li i { margin-right: 8px; color: #10b981; /* Emerald 500 */ margin-top: 3px; }
+  </style>
 </div>
 `;

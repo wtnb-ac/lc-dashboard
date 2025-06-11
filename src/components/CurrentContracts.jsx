@@ -62,28 +62,30 @@ const ListItem = ({ item, onConditionWarningClick, isMounted, onShowCoverageItem
       onClick={handleClick}
       title={`「${label}」の詳細を見る`}
     >
-      <div className="flex items-center">
-        <i className={`${iconClass} w-6 h-6 text-xl flex items-center justify-center mr-3 p-1 rounded-md bg-opacity-10 ${iconClass.split(' ').find(c => c.startsWith('text-'))?.replace('text-', 'bg-') || 'bg-gray-100'}`}></i> {/* アイコン背景追加 */}
-        <span className="text-sm font-medium text-gray-700">
-          {tag && <span className={`text-xs text-gray-500 mr-1.5 px-1.5 py-0.5 bg-gray-100 rounded-full`}>{tag}</span>}
-          {label}：
-          {condition && (
-            <span className="text-xs text-red-600 ml-1.5 font-semibold inline-flex items-center">
-              <i ref={warningIconRef} className="fas fa-exclamation-triangle text-yellow-500 mr-1 animate-pulse_slower"></i> {/* GSAPで制御するのでanimate-pulseは削除も可 */}
-              要確認
-              {condition === '(入院5日以上)' && (
-                <i
-                  className="fas fa-info-circle text-blue-400 ml-1.5 cursor-pointer hover:text-blue-600 transition-colors"
-                  onClick={(e) => {
-                     e.stopPropagation();
-                     onConditionWarningClick && onConditionWarningClick({ label, condition });
-                  }}
-                  title="この条件に関する注意点を見る"
-                ></i>
-              )}
-            </span>
-          )}
-        </span>
+      <div className="flex-grow flex items-center">
+        <i className={`${iconClass} w-6 h-6 text-xl flex items-center justify-center mr-3 p-1 rounded-md bg-opacity-10 ${iconClass.split(' ').find(c => c.startsWith('text-'))?.replace('text-', 'bg-') || 'bg-gray-100'}`}></i>
+        <div className="flex-grow">
+          {tag && <span className={`block text-xs text-gray-500 mb-0.5 px-1 py-0.5 bg-gray-100 rounded-full w-fit`}>{tag}</span>}
+          <span className="text-sm font-medium text-gray-700">
+            {label}：
+            {condition && (
+              <span className="text-xs text-red-600 ml-1.5 font-semibold inline-flex items-center">
+                <i ref={warningIconRef} className="fas fa-exclamation-triangle text-yellow-500 mr-1 animate-pulse_slower"></i>
+                要確認
+                {condition === '(入院5日以上)' && (
+                  <i
+                    className="fas fa-info-circle text-blue-400 ml-1.5 cursor-pointer hover:text-blue-600 transition-colors"
+                    onClick={(e) => {
+                       e.stopPropagation();
+                       onConditionWarningClick && onConditionWarningClick({ label, condition });
+                    }}
+                    title="この条件に関する注意点を見る"
+                  ></i>
+                )}
+              </span>
+            )}
+          </span>
+        </div>
       </div>
       <span className="text-base font-bold text-emerald-600 ml-2 whitespace-nowrap">
         {value.toLocaleString()}{unit}
@@ -191,9 +193,9 @@ function CurrentContracts({
   ].filter(item => item.value > 0);
 
   const otherCoverageItems = [
-    { key: 'other-deathLumpsum', label: '死亡一時金', value: other.deathLumpsum || 0, unit: '万円', tag: 'A社' },
-    { key: 'other-criticalCancer', label: 'がん一時金', value: other.criticalCancer || 0, unit: '万円', tag: 'B社' },
-    { key: 'other-medicalDaily', label: '入院日額', value: other.medicalDaily || 0, unit: '円', condition: '(入院5日以上)', tag: 'B社' },
+    { key: 'other-deathLumpsum', label: '死亡一時金', value: other.deathLumpsum || 0, unit: '万円', tag: '××生命' },
+    { key: 'other-criticalCancer', label: 'がん一時金', value: other.criticalCancer || 0, unit: '万円', tag: '△△生命' },
+    { key: 'other-medicalDaily', label: '入院日額', value: other.medicalDaily || 0, unit: '円', condition: '(入院5日以上)', tag: '△△生命' },
     { key: 'other-disabilityMonthly', label: '他社の就業不能', value: other.disabilityMonthly || 0, unit: '万円/月' },
     { key: 'other-savingsMonthly', label: '他社の積立', value: other.savingsMonthly || 0, unit: '円/月' },
   ].filter(item => item.value > 0);
@@ -223,45 +225,45 @@ function CurrentContracts({
   };
 
   return (
-    <section className="current-status flex flex-col flex-grow bg-gradient-to-br from-gray-50 to-slate-100 border border-gray-200 rounded-xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <h2 className="text-2xl font-bold text-green-800 border-b-3 border-green-700 pb-3 mb-5 flex items-center">
-        <i className="fas fa-shield-alt mr-3 text-green-600 text-3xl"></i>
+    <section className="current-status flex flex-col flex-grow bg-gradient-to-br from-gray-50 to-slate-100 border border-gray-200 rounded-xl p-4 shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <h2 className="text-xl font-bold text-green-800 border-b-2 border-green-800 pb-1 mb-1 text-center flex items-center justify-center">
+        <i className="fas fa-shield-alt mr-3 text-green-600"></i>
         ご加入中の保障内容
       </h2>
 
       <div id="current-contracts-list" className="flex-grow text-sm space-y-6">
         {/* --- Meiji Yasuda Contracts --- */}
         <div ref={selfSectionRef} className="contract-section bg-white border border-green-200 rounded-lg overflow-hidden shadow-md transition-all duration-300 hover:border-green-300">
-          <h4 className="text-lg font-semibold text-green-900 bg-green-100 p-3 px-4 flex items-center justify-between border-b border-green-200">
+          <h4 className="text-base font-bold text-emerald-700 bg-emerald-50 p-2.5 px-3 flex items-center justify-between border-b-2 border-emerald-200">
             <span className="flex items-center">
-              <i className="fas fa-building-shield mr-2.5 text-green-700 text-xl"></i>
-              明安の保険
+              <i className="fas fa-building-shield mr-2 text-emerald-600 text-xl"></i>
+              <span className="tracking-wide">〇〇生命</span>
             </span>
             { (selfPremium > 0 || isMounted) && (
-              <span className="text-sm font-medium text-green-800 bg-white/80 px-3 py-1 rounded-full shadow-sm">
-                月払: <span ref={selfPremiumRef} className="font-bold">{selfPremium > 0 ? selfPremium.toLocaleString() : '0'}</span>円
+              <span className="text-xs font-semibold text-emerald-800 bg-white/80 px-2.5 py-0.5 rounded-full shadow-sm">
+                月払: <span ref={selfPremiumRef} className="font-extrabold text-sm">{selfPremium > 0 ? selfPremium.toLocaleString() : '0'}</span>円
               </span>
             )}
           </h4>
-          <ul className="list-none p-3.5 m-0 space-y-1.5">
+          <ul className="list-none p-2.5 m-0 space-y-1">
             {selfItemsElements}
           </ul>
         </div>
 
         {/* --- Other Companies Contracts --- */}
         <div ref={otherSectionRef} className="contract-section bg-white border border-sky-200 rounded-lg overflow-hidden shadow-md transition-all duration-300 hover:border-sky-300">
-          <h4 className="text-lg font-semibold text-sky-900 bg-sky-100 p-3 px-4 flex items-center justify-between border-b border-sky-200">
-             <span className="flex items-center">
-               <i className="fas fa-landmark mr-2.5 text-sky-700 text-xl"></i>
-               他社の保険
+          <h4 className="text-base font-bold text-slate-700 bg-slate-100 p-2.5 px-3 flex items-center justify-between border-b-2 border-slate-200">
+            <span className="flex items-center">
+              <i className="fas fa-landmark mr-2 text-slate-500 text-xl"></i>
+              <span className="tracking-wide">他社保険</span>
             </span>
             { (otherPremium > 0 || isMounted) && (
-              <span className="text-sm font-medium text-sky-800 bg-white/80 px-3 py-1 rounded-full shadow-sm">
-                月払: <span ref={otherPremiumRef} className="font-bold">{otherPremium > 0 ? otherPremium.toLocaleString() : '0'}</span>円
+              <span className="text-xs font-semibold text-slate-800 bg-white/80 px-2.5 py-0.5 rounded-full shadow-sm">
+                月払: <span ref={otherPremiumRef} className="font-extrabold text-sm">{otherPremium > 0 ? otherPremium.toLocaleString() : '0'}</span>円
               </span>
             )}
           </h4>
-          <ul className="list-none p-3.5 m-0 space-y-1.5">
+          <ul className="list-none p-2.5 m-0 space-y-1">
             {otherItemsElements}
             <li className="mt-4 pt-3 border-t border-sky-200">
                 <button
@@ -277,7 +279,7 @@ function CurrentContracts({
       </div>
 
       <div id="current-total-premium-display" className="mt-6 pt-4 border-t-2 border-dashed border-gray-300 text-right">
-        <span className="text-base text-gray-700 mr-2">毎月の合計保険料:</span>
+        <span className="text-base text-gray-700 mr-2">現在の合計保険料:</span>
         <span ref={totalPremiumRef} className="text-2xl font-extrabold text-emerald-700">{totalPremium > 0 ? totalPremium.toLocaleString() : '0'}</span>
         <span className="text-base font-semibold text-gray-700 ml-1">円</span>
       </div>

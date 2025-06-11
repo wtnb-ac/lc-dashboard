@@ -358,7 +358,7 @@ function CoverageRadarChart({
   }, [indicatorsConfig, onAxisLabelClick, chartRef]); // Add chartRef to dependencies
 
   return (
-    <div className="center-column module flex flex-col bg-white border border-gray-200 rounded-md p-4 shadow-sm">
+    <div className="center-column module flex flex-col bg-white border border-gray-200 rounded-md p-2 shadow-sm">
       <h2 className="text-xl font-bold text-green-800 border-b-2 border-green-800 pb-1 mb-1 text-center flex items-center justify-center">
         <i className="fas fa-compass mr-2 text-emerald-600"></i> {/* Changed icon */} 
         保障充足度バランス

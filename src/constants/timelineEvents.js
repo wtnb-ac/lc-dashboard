@@ -2,141 +2,332 @@
 
 export const timelineEvents = {
     0: {
-        title: "定期訪問", date: "3カ月前",
-        details: `<div class="step-detail-wrapper p-2">
-                   <h4 class="text-base font-semibold text-orange-700 mb-2"><i class="fa-solid fa-calendar-check mr-2 opacity-80"></i>年に一度の定期訪問</h4>
-                   <div class="space-y-2 text-xs">
-                     <p class="agent-talk bg-green-50 p-2 rounded border border-green-100">「太郎さん、こんにちは！<img src="pentan.png" alt="" class="inline-block h-4 align-middle mx-0.5" /> 最近ご様子いかがですか？年に一度の大切な確認です。」</p>
-                     <p>ご挨拶からスタート。ご健康そうで何よりです😊</p>
-                     <p>お子さまの中学受験を考え始めたとのこと。ライフプランも変わる節目、保険も一緒に見直しませんか？とお声がけしました。</p>
-                     <div class="reflection-prompt mt-3 border-t pt-2 border-orange-200">
-                       <p class="text-orange-800 font-medium"><i class="fas fa-heart mr-1.5 text-red-400"></i>当時の気持ち：<span class="font-normal text-gray-700">「特に変化ないかな…？」</span></p>
-                     </div>
-                   </div>
-                   <div class="ai-comment-bubble mt-3 bg-orange-50 rounded p-2">
-                     <img src="pentan.png" alt="" class="inline-block h-5 align-middle mr-1" />
-                     <span class="text-xs font-medium text-orange-900">大切なご家族のため、この機会に見直しましょう！✨ 次は<strong class="text-green-700">現在のご契約</strong>を確認しますね。</span>
-                   </div>
-                 </div>`,
+        id: 0,
+        title: '定期訪問・現状確認',
+        date: '2023-05-10',
+        icon: 'fas fa-calendar-check',
+        summary: (
+            '<div class="dialogue-container">' +
+                '<div class="dialogue-block pentan">' +
+                    '<img src="/pentan.png" class="dialogue-icon" alt="ペンタン">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「太郎さん、こんにちは！その後いかがですか？上のお子さんの習い事がピアノにサッカーに…わあ、賑やかですね！週末はご家族でキャンプに行かれたとか。羨ましいです！そんな中で、最近は<span class="keyword-inline">教育費</span>や将来のことが少し気になり始めた、とお伺いしました。」' +
+                        '</p>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="dialogue-block customer">' +
+                    '<img src="/icons/customer_avatar.png" class="dialogue-icon" alt="顧客">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「そうなんだよ、ペンタン。子供のやりたいことは応援したいし、家族の楽しみも減らしたくない。でも、今の<span class="keyword-inline">備え</span>で本当に十分なのか、ちゃんと見直しておきたくてね。」' +
+                        '</p>' +
+                    '</div>' +
+                    '<span class="keyword-wappen" data-keyword-anim="きっかけ">#見直しのきっかけ</span>' +
+                '</div>' +
+            '</div>'
+        ),
+        image: 'greeting.png',
+        keyPoints: ['教育費の悩み', '家族時間も大切', '備えの再確認'],
+        pentanComment: '',
+        themeColorClass: {
+            bg: 'bg-sky-500', text: 'text-sky-700', border: 'border-sky-300',
+            accentBg: 'bg-sky-50', iconContainerBg: 'bg-sky-100', pentanWave: 'from-sky-400 to-cyan-300'
+        },
     },
     1: {
-        title: "既契約の確認", date: "2.5ヶ月前",
-        details: `<div class="step-detail-wrapper p-2">
-                   <h4 class="text-base font-semibold text-orange-700 mb-2"><i class="fa-solid fa-book-open mr-2 opacity-80"></i>ご加入中保険の確認</h4>
-                   <div class="space-y-2 text-xs">
-                     <p class="agent-talk bg-green-50 p-2 rounded border border-green-100">「お預かりした証券、しっかり確認しました！<img src="pentan.png" alt="" class="inline-block h-4 align-middle mx-0.5" />🔍」</p>
-                     <p class="font-semibold">＜わかったこと＞</p>
-                     <ul class="list-disc list-inside space-y-1 pl-2">
-                       <li>死亡保障 → 加入済みだけど、今の家族構成には少し足りないかも？</li>
-                       <li>就業不能 → もしもの収入減への備え、もう少しあると安心？</li>
-                       <li>医療保障 → 短期入院は対象外の可能性 (<strong class="text-red-600">要注意！</strong>)</li>
-                     </ul>
-                     <div class="reflection-prompt mt-3 border-t pt-2 border-orange-200">
-                       <p class="text-orange-800 font-medium"><i class="fas fa-lightbulb mr-1.5 text-yellow-500"></i>当時の気づき：<span class="font-normal text-gray-700">「短期入院の保障、手薄だったんだ…」</span></p>
-                     </div>
-                   </div>
-                   <div class="ai-comment-bubble mt-3 bg-orange-50 rounded p-2">
-                     <img src="pentan.png" alt="" class="inline-block h-5 align-middle mr-1" />
-                     <span class="text-xs font-medium text-orange-900">現状が分かりましたね！次は太郎さんの<strong class="text-green-700">「心配なこと」</strong>を教えてください。</span>
-                   </div>
-                 </div>`,
+        id: 1,
+        title: '既契約分析・見える化',
+        date: '2023-05-20',
+        icon: 'fas fa-search-dollar',
+        summary: (
+            '<div class="dialogue-container">' +
+                 '<div class="dialogue-block customer">' +
+                    '<img src="/icons/customer_avatar.png" class="dialogue-icon" alt="顧客">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「保険証券、見てもらったけど、やっぱり自分じゃよく分からなくて…。特に<span class="keyword-inline">医療保険</span>、入院5日目からっていうのは、今の時代だとちょっと心配だよね？<span class="keyword-inline">がん</span>以外の重い病気もカバーできてるのかな？」' +
+                        '</p>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="dialogue-block pentan">' +
+                    '<img src="/pentan.png" class="dialogue-icon" alt="ペンタン">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「太郎さん、ご心配な点を詳しく教えていただきありがとうございます。確かに、医療保険の給付条件は気になるところですね。死亡保障は定期保険で1000万円確保されていますが、目的が少し曖昧な点がもったいないかもしれません。他の重い病気への備えも、これを機にしっかり確認しましょう！まずは<span class="keyword-inline">現状を正確に把握</span>することが大切ですから、今日の分析が第一歩です！」' +
+                        '</p>' +
+                    '</div>' +
+                    '<span class="keyword-wappen" data-keyword-anim="現状把握">#現状把握</span>' +
+                '</div>' +
+            '</div>'
+        ),
+        image: 'analysis.png',
+        keyPoints: ['医療保障の条件不安', 'がん以外の重病は？', '現状を正確に把握'],
+        pentanComment: '',
+        themeColorClass: {
+            bg: 'bg-teal-500', text: 'text-teal-700', border: 'border-teal-300',
+            accentBg: 'bg-teal-50', iconContainerBg: 'bg-teal-100', pentanWave: 'from-teal-400 to-emerald-300'
+        },
     },
     2: {
-        title: "保障の目的確認", date: "2ヶ月前",
-        details: `<div class="step-detail-wrapper p-2">
-                   <h4 class="text-base font-semibold text-orange-700 mb-2"><i class="fa-solid fa-clipboard-question mr-2 opacity-80"></i>どんなリスクに備えたい？</h4>
-                   <div class="space-y-2 text-xs">
-                     <p class="agent-talk bg-green-50 p-2 rounded border border-green-100">「もしもの時、一番心配なのはどんなことですか？<img src="pentan.png" alt="" class="inline-block h-4 align-middle mx-0.5" />」</p>
-                     <p>具体的な状況を想像しながら、太郎さんの不安やお考えをじっくりお伺いしました。</p>
-                     <p class="font-semibold">＜一番大切なこと＞</p>
-                     <p class="pl-2"><strong>『ご家族のため』</strong><i class="fas fa-heart text-red-500 mx-1"></i>。特に、<strong class="text-blue-700">万一の生活費</strong>と<strong class="text-blue-700">働けなくなった時の収入</strong>をしっかり守りたい。</p>
-                     <div class="reflection-prompt mt-3 border-t pt-2 border-orange-200">
-                       <p class="text-orange-800 font-medium"><i class="fas fa-check mr-1.5 text-green-500"></i>当時の決定：<span class="font-normal text-gray-700">「家族の生活を守る保障を優先しよう！」</span></p>
-                     </div>
-                   </div>
-                   <div class="ai-comment-bubble mt-3 bg-orange-50 rounded p-2">
-                     <img src="pentan.png" alt="" class="inline-block h-5 align-middle mr-1" />
-                     <span class="text-xs font-medium text-orange-900">大切なお気持ち、しかと受け止めました！💪 次は<strong class="text-green-700">必要な保障額</strong>を計算しましょう。</span>
-                   </div>
-                 </div>`,
+        id: 2,
+        title: '詳細ヒアリング',
+        date: '2023-06-05',
+        icon: 'fas fa-comments-dollar',
+        summary: (
+            '<div class="dialogue-container">' +
+                '<div class="dialogue-block customer">' +
+                    '<img src="/icons/customer_avatar.png" class="dialogue-icon" alt="顧客">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「もし自分に何かあったら、子供たちには迷惑かけたくない。特に<span class="keyword-inline">教育費</span>はしっかり残してあげたいんだ。大学まで行かせてあげたいしね。」' +
+                        '</p>' +
+                    '</div>' +
+                    '<span class="keyword-wappen" data-keyword-anim="教育費重視">#教育費重視</span>' +
+                '</div>' +
+                '<div class="dialogue-block wife">' +
+                    '<img src="/icons/wife_avatar.png" class="dialogue-icon" alt="妻">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「そうね、学費はもちろんだけど、日々の<span class="keyword-inline">生活費</span>も心配だわ。住宅ローンもまだ残っているし…。私一人で全部まかなえるか不安よ。」' +
+                        '</p>' +
+                    '</div>' +
+                    '<span class="keyword-wappen" data-keyword-anim="生活費も">#生活費も</span>' +
+                '</div>' +
+                '<div class="dialogue-block pentan">' +
+                    '<img src="/pentan.png" class="dialogue-icon" alt="ペンタン">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「太郎さん、花子さん、お子様への深い愛情と、ご家族の将来を真剣に考えていらっしゃる想いがひしひしと伝わってきます。住宅ローンの残高や、理想の保険料など、具体的なお話もありがとうございます。これらの想いを形にするために、次のステップで<span class="keyword-inline">具体的なゴール</span>を一緒に設定しましょう。」' +
+                        '</p>' +
+                    '</div>' +
+                '</div>' +
+            '</div>'
+        ),
+        image: 'hearing.png',
+        keyPoints: ['家族への想い', '教育費は聖域', 'ローンと生活費'],
+        pentanComment: '',
+        themeColorClass: {
+            bg: 'bg-amber-500', text: 'text-amber-700', border: 'border-amber-300',
+            accentBg: 'bg-amber-50', iconContainerBg: 'bg-amber-100', pentanWave: 'from-amber-400 to-yellow-300'
+        },
     },
     3: {
-        title: "必要保障額の試算", date: "1.5ヶ月前",
-        details: `<div class="step-detail-wrapper p-2">
-                   <h4 class="text-base font-semibold text-orange-700 mb-2"><i class="fa-solid fa-calculator mr-2 opacity-80"></i>必要保障額シミュレーション</h4>
-                   <div class="space-y-2 text-xs">
-                     <p class="agent-talk bg-green-50 p-2 rounded border border-green-100">「先ほどのお気持ちを形にすると、どれくらいの備えが必要になるか計算してみますね<img src="pentan.png" alt="" class="inline-block h-4 align-middle mx-0.5" />」</p>
-                     <p>シミュレーションの結果…万一の場合、必要額は <strong class="text-lg">約4,500万円</strong>。</p>
-                     <p>現在の備えが約1,000万円なので、不足分 <strong class="text-red-600 text-lg">約3,500万円</strong> が新しい目標ですね！</p>
-                     <div class="reflection-prompt mt-3 border-t pt-2 border-orange-200">
-                       <p class="text-orange-800 font-medium"><i class="fas fa-bullseye mr-1.5 text-blue-500"></i>当時の目標：<span class="font-normal text-gray-700">「3,500万円をどう準備するか考えよう。」</span></p>
-                     </div>
-                   </div>
-                   <div class="ai-comment-bubble mt-3 bg-orange-50 rounded p-2">
-                     <img src="pentan.png" alt="" class="inline-block h-5 align-middle mr-1" />
-                     <span class="text-xs font-medium text-orange-900">具体的な目標が見えました！🎯 これをカバーする<strong class="text-green-700">最初のプラン</strong>をご提案します。</span>
-                   </div>
-                 </div>`,
+        id: 3,
+        title: 'ゴール設定・方向性確認',
+        date: '2023-06-15',
+        icon: 'fas fa-bullseye',
+        summary: (
+            '<div class="dialogue-container">' +
+                '<div class="dialogue-block pentan">' +
+                    '<img src="/pentan.png" class="dialogue-icon" alt="ペンタン">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「先日のヒアリングでお伺いした大切な想いを元に、保険で備えるべき具体的な<span class="keyword-inline">目標額</span>と<span class="keyword-inline">優先順位</span>を整理してみました。太郎さんの『子供たちの教育費と、万一の時の家族の生活費は絶対に守りたい！』というお気持ちを最優先に。医療保障については、短期入院にも対応しやすい<span class="keyword-inline">一時金重視</span>が良いかと。全体の保険料は、現状の負担を大きく超えない範囲で調整する、という方向性でいかがでしょうか？」' +
+                        '</p>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="dialogue-block customer">' +
+                    '<img src="/icons/customer_avatar.png" class="dialogue-icon" alt="顧客">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「うん、それでお願いしたい。子供たちのことは本当に一番大事だから、そこが手厚くなるのは安心だ。保険料もこのくらいなら、やっていけると思う。」' +
+                        '</p>' +
+                    '</div>' +
+                    '<span class="keyword-wappen" data-keyword-anim="方向性合意">#方向性合意</span>' +
+                '</div>' +
+            '</div>'
+        ),
+        image: 'setting.png',
+        keyPoints: ['最優先：教育費＋生活費', '医療：一時金型へ', '保険料：現状維持'],
+        pentanComment: '',
+        themeColorClass: {
+            bg: 'bg-orange-500', text: 'text-orange-700', border: 'border-orange-300',
+            accentBg: 'bg-orange-50', iconContainerBg: 'bg-orange-100', pentanWave: 'from-orange-400 to-red-300'
+        },
     },
     4: {
-        title: "初回プラン提案とFB", date: "1ヶ月前",
-        details: `<div class="step-detail-wrapper p-2">
-                   <h4 class="text-base font-semibold text-orange-700 mb-2"><i class="fa-solid fa-file-prescription mr-2 opacity-80"></i>初回プランのご提案</h4>
-                   <div class="space-y-2 text-xs">
-                     <p class="agent-talk bg-green-50 p-2 rounded border border-green-100">「目標額3,500万円をカバーするため、死亡・就業不能中心のプランを作成しました！<img src="pentan.png" alt="" class="inline-block h-4 align-middle mx-0.5" />」</p>
-                     <div class="customer-feedback-box mt-2 bg-blue-50 p-2 rounded border border-blue-100">
-                       <p class="font-semibold mb-1"><i class="fa-solid fa-comment mr-1 text-blue-600"></i> 太郎さん：「必要性は分かったけど、保険料が予算オーバーだな…。少し抑えたい。」</p>
-                     </div>
-                     <div class="reflection-prompt mt-3 border-t pt-2 border-orange-200">
-                       <p class="text-orange-800 font-medium"><i class="fas fa-wallet mr-1.5 text-orange-500"></i>当時の悩み：<span class="font-normal text-gray-700">「保障は大事だけど、毎月の支払いが…」</span></p>
-                     </div>
-                   </div>
-                   <div class="ai-comment-bubble mt-3 bg-orange-50 rounded p-2">
-                     <img src="pentan.png" alt="" class="inline-block h-5 align-middle mr-1" />
-                     <span class="text-xs font-medium text-orange-900">ご予算、大事ですよね！承知しました👍 次回は<strong class="text-green-700">調整したプラン</strong>を奥様もご一緩に！</span>
-                   </div>
-                 </div>`,
+        id: 4,
+        title: 'プラン作成・比較検討',
+        date: '2023-07-01',
+        icon: 'fas fa-magic',
+        summary: (
+            '<div class="dialogue-container">' +
+                '<div class="dialogue-block pentan">' +
+                    '<img src="/pentan.png" class="dialogue-icon" alt="ペンタン">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「設定したゴールに向けて、具体的なプランを3つ作成してみました。Aプランは保障と保険料の<span class="keyword-inline">バランス型</span>、Bプランは保障を<span class="keyword-inline">手厚く</span>した安心型、Cプランは保険料をぐっと<span class="keyword-inline">抑えた</span>堅実型です。いかがでしょうか？」' +
+                        '</p>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="dialogue-block customer">' +
+                    '<img src="/icons/customer_avatar.png" class="dialogue-icon" alt="顧客">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「うーん、こうして見ると悩むね…。Bプランの手厚さは魅力的だけど、保険料も結構上がるんだな。Cプランは安いけど、ちょっと心許ない気もするし…。」' +
+                        '</p>' +
+                    '</div>' +
+                    '<span class="keyword-wappen" data-keyword-anim="悩む">#比較検討中</span>' +
+                '</div>' +
+                '<div class="dialogue-block wife">' +
+                    '<img src="/icons/wife_avatar.png" class="dialogue-icon" alt="妻">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「そうねぇ…。Aプランが一番現実的かしら？でも、もう少し医療の部分を手厚くできないかしら？私がもし入院したら、家のことが心配で…。」' +
+                        '</p>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="dialogue-block pentan">' +
+                    '<img src="/pentan.png" class="dialogue-icon" alt="ペンタン">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「かしこまりました！花子さんのご意見、とても大切です。では、Aプランをベースに、医療保障を少し充実させる方向で<span class="keyword-inline">カスタマイズ</span>してみましょう！きっとお二人にピッタリのプランが見つかりますよ！」' +
+                        '</p>' +
+                    '</div>' +
+                    '<span class="keyword-wappen" data-keyword-anim="調整開始">#調整開始</span>' +
+                '</div>' +
+            '</div>'
+        ),
+        image: 'comparison.png',
+        keyPoints: ['悩む', 'カスタマイズ', '調整'],
+        pentanComment: '',
+        themeColorClass: {
+            bg: 'bg-indigo-500', text: 'text-indigo-700', border: 'border-indigo-300',
+            accentBg: 'bg-indigo-50', iconContainerBg: 'bg-indigo-100', pentanWave: 'from-indigo-400 to-purple-400'
+        },
     },
     5: {
-        title: "第2回提案(奥様同席)", date: "2週間前",
-        details: `<div class="step-detail-wrapper p-2">
-                   <h4 class="text-base font-semibold text-orange-700 mb-2"><i class="fa-solid fa-comments mr-2 opacity-80"></i>第2回プラン提案 (奥様と)</h4>
-                   <div class="space-y-2 text-xs">
-                     <p class="agent-talk bg-green-50 p-2 rounded border border-green-100">「ご予算に合わせて、医療保障などを調整したプランです。いかがでしょうか？<img src="pentan.png" alt="" class="inline-block h-4 align-middle mx-0.5" />」</p>
-                     <p class="text-gray-600 text-[10px] pl-2">（死亡・就業不能は維持しつつ、医療・重病は基本レベルに調整）</p>
-                     <div class="customer-feedback-box mt-2 bg-blue-50 p-2 rounded border border-blue-100">
-                       <p class="font-semibold mb-1"><i class="fa-solid fa-user-group mr-1 text-blue-600"></i> お二人：「この方向でいいね！<strong>学資準備</strong>も考えたい。」</p>
-                     </div>
-                     <div class="reflection-prompt mt-3 border-t pt-2 border-orange-200">
-                       <p class="text-orange-800 font-medium"><i class="fas fa-graduation-cap mr-1.5 text-purple-500"></i>当時の希望：<span class="font-normal text-gray-700">「教育費もしっかり準備したい！」</span></p>
-                     </div>
-                   </div>
-                   <div class="ai-comment-bubble mt-3 bg-orange-50 rounded p-2">
-                     <img src="pentan.png" alt="" class="inline-block h-5 align-middle mr-1" />
-                     <span class="text-xs font-medium text-orange-900">ご納得いただけて嬉しいです！学資も大切ですね✍️ これで<strong class="text-green-700">最終確認</strong>に進みましょう！</span>
-                   </div>
-                 </div>`,
+        id: 5,
+        title: 'プラン提案・最終確認',
+        date: '未定',
+        icon: 'fas fa-file-signature',
+        summary: (
+            '<div class="dialogue-container">' +
+                '<div class="dialogue-block pentan">' +
+                    '<img src="/pentan.png" class="dialogue-icon" alt="ペンタン">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「太郎さん、花子さん、お待たせいたしました！こちらがAプランをベースに医療保障を調整した<span class="keyword-inline">最終プラン</span>です。万一の際の生活費と教育費、そして花子さんが気にされていた医療一時金もバランス良く備えられたかと思います。いかがでしょうか？」' +
+                        '</p>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="dialogue-block customer">' +
+                    '<img src="/icons/customer_happy_avatar.png" class="dialogue-icon" alt="顧客">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「おお、これいいね！これなら万一の時も子供たちの<span class="keyword-inline">教育費も安心</span>だし、医療も手厚くなった。月々の<span class="keyword-inline">保険料も無理なく</span>続けられそうだ！」' +
+                        '</p>' +
+                    '</div>' +
+                     '<span class="keyword-wappen" data-keyword-anim="納得！">#納得！</span>' +
+                '</div>' +
+                '<div class="dialogue-block wife">' +
+                    '<img src="/icons/wife_avatar.png" class="dialogue-icon" alt="妻">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「ええ、私もこれなら安心できるわ。特に、私たちの家族にあった保険なので心強いです。」' +
+                        '</p>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="dialogue-block pentan">' +
+                    '<img src="/pentan.png" class="dialogue-icon" alt="ペンタン">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「お二人にそう言っていただけて、私も嬉しいです！では、最終的な保障内容、保険金額、保険料について、もう一度しっかり<span class="keyword-inline">ご確認</span>いただきましょう。ご不明な点は遠慮なくおっしゃってくださいね。」' +
+                        '</p>' +
+                    '</div>' +
+                '</div>' +
+            '</div>'
+        ),
+        image: 'proposal.png',
+        keyPoints: ['家族の想い、形に', '月々の負担も納得', '最終チェックOK'],
+        pentanComment: '',
+        themeColorClass: {
+            bg: 'bg-purple-500', text: 'text-purple-700', border: 'border-purple-300',
+            accentBg: 'bg-purple-50', iconContainerBg: 'bg-purple-100', pentanWave: 'from-purple-400 to-pink-400'
+        },
+        guidanceTitle: '最終プランのご確認と今後のステップ',
+        guidanceContent: `
+            <div class="space-y-3 text-xs">
+                <p class="font-semibold text-purple-700">現在、最終プラン内容をご確認いただいている段階です。</p>
+                <div>
+                    <h5 class="font-bold text-gray-700 mb-1"><i class="fas fa-list-check mr-1.5 text-purple-500"></i>ご確認いただきたいポイント</h5>
+                    <ul class="list-disc list-inside pl-3 space-y-0.5 text-gray-600">
+                        <li>提案された保障内容は、以前お伺いしたご意向（教育資金、生活費、医療など）を十分にカバーできていますか？</li>
+                        <li>保険金額や保険期間は適切ですか？</li>
+                        <li>月々の保険料は、家計に無理のない範囲ですか？</li>
+                        <li>不明な点や、再度説明を聞きたい箇所はありませんか？</li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="font-bold text-gray-700 mb-1"><i class="fas fa-arrow-right-long mr-1.5 text-purple-500"></i>今後の流れ（ご意向確認後）</h5>
+                    <ol class="list-decimal list-inside pl-3 space-y-0.5 text-gray-600">
+                        <li>お申込意思の最終確認</li>
+                        <li>お申込書類のご準備・ご記入</li>
+                        <li>告知・審査手続き</li>
+                        <li>ご契約成立・保険証券のお届け</li>
+                    </ol>
+                </div>
+                <p class="text-gray-500 italic mt-2">ご不明な点がございましたら、お気軽に担当者までお申し付けください。</p>
+            </div>
+        `
     },
     6: {
-        title: "プラン最終確認中", date: "現在",
-        details: `<div class="step-detail-wrapper p-2">
-                   <h4 class="text-base font-semibold text-orange-700 mb-2"><i class="fa-solid fa-lightbulb mr-2 opacity-80"></i>プラン最終確認中</h4>
-                   <div class="space-y-2 text-xs">
-                     <p class="agent-talk bg-green-50 p-2 rounded border border-green-100">「作成したプラン内容について、最終確認をお願いしています。<img src="pentan.png" alt="" class="inline-block h-4 align-middle mx-0.5" />」</p>
-                     <p class="font-semibold">＜現在のプラン概要＞</p>
-                     <ul class="list-disc list-inside space-y-1 pl-2">
-                       <li>ご意向に沿った<strong class="text-blue-700">死亡・就業不能保障</strong></li>
-                       <li>バランスを考慮した<strong class="text-blue-700">医療・重病保障</strong></li>
-                       <li>将来に向けた<strong class="text-blue-700">学資準備</strong>の積立</li>
-                     </ul>
-                     <div class="reflection-prompt mt-3 border-t pt-2 border-orange-200">
-                        <p class="text-orange-800 font-medium"><i class="fas fa-tasks mr-1.5 text-teal-500"></i>今考えていること：<span class="font-normal text-gray-700">「内容に納得。最終決定しようかな。」</span></p>
-                     </div>
-                   </div>
-                   <div class="ai-comment-bubble mt-3 bg-orange-50 rounded p-2">
-                     <img src="pentan.png" alt="" class="inline-block h-5 align-middle mr-1" />
-                     <span class="text-xs font-medium text-orange-900">ここまで一緩に考えてくださり感謝です😌 ご不明点があればいつでもお声がけください！</span>
-                   </div>
-                 </div>`,
+        id: 6,
+        title: 'プラン決定・申込手続',
+        date: '未定',
+        icon: 'fas fa-check-double',
+        summary: (
+            '<div class="dialogue-container">' +
+                '<div class="dialogue-block customer">' +
+                    '<img src="/icons/customer_avatar.png" class="dialogue-icon" alt="顧客">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「うん、このプランで決まりだ！ありがとう、ペンタン。それで、<span class="keyword-inline">申込</span>って何が必要になるのかな？時間とか結構かかる？」' +
+                        '</p>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="dialogue-block pentan">' +
+                    '<img src="/pentan.png" class="dialogue-icon" alt="ペンタン">' +
+                    '<div class="dialogue-content-wrapper">' +
+                        '<p class="dialogue-text">' +
+                            '「太郎さん、ご決断ありがとうございます！お申込手続きですね。まず、<span class="keyword-inline">重要事項のご説明</span>をさせていただき、その後、申込書類にご記入いただきます。健康状態などの<span class="keyword-inline">告知</span>も必要になりますね。お手続き自体はそれほどお時間はかかりませんよ。必要な書類なども改めてご案内しますのでご安心ください。」' +
+                        '</p>' +
+                    '</div>' +
+                    '<span class="keyword-wappen" data-keyword-anim="契約へ！">#契約へ！</span>' +
+                '</div>' +
+            '</div>'
+        ),
+        image: '/images/timeline/timeline_6_application.png',
+        keyPoints: ['いよいよ契約へ', '必要書類は？', '手続きスムーズに'],
+        pentanComment: '',
+        themeColorClass: {
+            bg: 'bg-green-500', text: 'text-green-700', border: 'border-green-300',
+            accentBg: 'bg-green-50', iconContainerBg: 'bg-green-100', pentanWave: 'from-green-400 to-lime-300'
+        },
+        guidanceTitle: 'お申込手続きについて',
+        guidanceContent: `
+            <div class="space-y-3 text-xs">
+                <p class="font-semibold text-green-700">プラン内容にご納得いただけましたら、お申込手続きに進みます。</p>
+                <div>
+                    <h5 class="font-bold text-gray-700 mb-1"><i class="fas fa-file-signature mr-1.5 text-green-500"></i>主な手続きステップ</h5>
+                    <ol class="list-decimal list-inside pl-3 space-y-0.5 text-gray-600">
+                        <li><strong>重要事項説明：</strong>担当者より、ご契約に関する大切な事柄をご説明します。</li>
+                        <li><strong>申込書類のご記入：</strong>必要事項をご記入・ご捺印いただきます。</li>
+                        <li><strong>告知：</strong>健康状態などについて正確にお知らせいただきます。</li>
+                        <li><strong>保険料のお支払い方法選択：</strong>口座振替またはクレジットカード等をお選びいただきます。</li>
+                    </ol>
+                </div>
+                <div>
+                    <h5 class="font-bold text-gray-700 mb-1"><i class="fas fa-shield-alt mr-1.5 text-green-500"></i>ご契約成立までの流れ</h5>
+                    <p class="text-gray-600">お申込後、保険会社による審査が行われます。審査が承認されると契約成立となり、後日保険証券をお届けいたします。</p>
+                </div>
+                 <div>
+                    <h5 class="font-bold text-gray-700 mb-1"><i class="fas fa-undo mr-1.5 text-green-500"></i>クーリング・オフ制度</h5>
+                    <p class="text-gray-600">ご契約後でも、一定期間内であれば無条件でお申込みの撤回またはご契約の解除ができます。</p>
+                </div>
+                <p class="text-gray-500 italic mt-2">ご準備いただくものや、お手続きの所要時間など、詳細は担当者よりご案内いたします。</p>
+            </div>
+        `
     }
 };

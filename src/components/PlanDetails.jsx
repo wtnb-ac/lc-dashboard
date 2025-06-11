@@ -4,16 +4,63 @@ import { gsap } from 'gsap';
 // import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 // import { faFileInvoiceDollar, faShieldAlt, faUserShield, faHospital, faGraduationCap, faLightbulb, faChild, faBaby, faPiggyBank, faCross, faUserInjured, faStethoscope, faHeartPulse } from '@fortawesome/free-solid-svg-icons';
 
+// ★ダミーの保険料計算関数（本来は useAiConcierge.js や calculationUtils.js のロジックを参照・移植する）
+const getDummyPremiumApproximation = (value, type) => {
+  if (type === 'deathLump') return Math.max(500, Math.round(value * 0.03 * 100));
+  if (type === 'deathAnn') return Math.max(300, Math.round(value * 1.5 * 100));
+  if (type === 'disLump') return Math.max(400, Math.round(value * 0.025 * 100));
+  if (type === 'disMonth') return Math.max(250, Math.round(value * 2.0 * 100));
+  if (type === 'medDaily') return Math.max(100, Math.round(value * 0.2));
+  if (type === 'medSurgery') return Math.max(200, Math.round(value * 0.05 * 100));
+  if (type === 'critCancer') return Math.max(300, Math.round(value * 0.04 * 100));
+  if (type === 'critCirc') return Math.max(280, Math.round(value * 0.035 * 100));
+  if (type === 'savings') return Math.max(0, Math.round(value * 0.95));
+  return 0;
+};
+
 // Helper function to render clickable benefit items (Accordion Style)
-const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, planData, categoryType }) => {
+const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, planData, categoryType, currentPlanContext, currentPlanName }) => {
   const [isOpen, setIsOpen] = useState(true); // Default to OPEN again
-  const validItems = items.filter(item => item.value > 0 || item.key === 'comprehensiveMedical'); // Include comprehensiveMedical even if value is 0
+  // const validItems = items.filter(item => item.value > 0 || item.key === 'comprehensiveMedical'); // Include comprehensiveMedical even if value is 0
+  // 病気・ケガの保障カテゴリでは、itemsに直接渡されたもの(criticalIllnessItems)とplanData.medicalBenefitsIncludedから生成したものを結合する
+  let combinedItems = items;
+  if (category === '病気・ケガの保障' && planData && planData.medicalBenefitsIncluded) {
+    const medicalItemsFromPlan = planData.medicalBenefitsIncluded.map(key => {
+        // この部分は PlanDetails の medicalElements 生成ロジックを参考に、簡易的な item オブジェクトを生成
+        // App.js から渡される planData (simulatedData) の構造に依存
+        let label = '';
+        let value = planData[key] || 0;
+        let unit = '';
+        let iconClassFromMap = '';
+        // 簡易的なマッピング
+        if (key === 'medicalDaily' || key === 'daily') { label = '入院日額'; unit = '円/日'; iconClassFromMap = 'fa-bed-pulse'; if (planData.medicalDaily) value = planData.medicalDaily; }
+        else if (key === 'medicalLumpSum' || key === 'lumpSum') { label = '入院一時金'; unit = '万円'; iconClassFromMap = 'fa-suitcase-medical'; if(planData.medicalLumpSum) value=planData.medicalLumpSum; else value=0; }
+        else if (key === 'treatment') { label = '入院治療費補填'; unit = ''; iconClassFromMap = 'fa-receipt'; value = planData.treatment || '実費補填';}
+        else if (key === 'postDischarge') { label = '退院後通院補填'; unit = ''; iconClassFromMap = 'fa-person-walking-arrow-right'; value = planData.postDischarge || '実費補填'; }
+        else if (key === 'advanced') { label = '先進医療保障'; unit = ''; iconClassFromMap = 'fa-star-of-life'; value = planData.advanced || 'あり'; }
+        
+        return { key: `medical_${key}`, label, value, unit, iconClassFromMap, isMedicalBenefit: true };
+    }).filter(item => item.label); // ラベルが設定されたもののみ
+    combinedItems = [...medicalItemsFromPlan, ...items.filter(i => i.key === 'criticalCancer' || i.key === 'criticalCirculatory')]; // items は criticalIllnessItems
+  }
+  const validItems = combinedItems.filter(item => (typeof item.value === 'number' && item.value > 0) || (typeof item.value === 'string' && item.value && item.value !== '0') || item.key === 'comprehensiveMedical');
+
   const contentRef = useRef(null);
   const headerRef = useRef(null);
   const itemsRef = useRef([]);
+  const categoryIconRef = useRef(null); // カテゴリアイコンの参照
+  const categoryPremiumRef = useRef(null); // カテゴリ保険料の参照
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
+    if (categoryIconRef.current) {
+      gsap.to(categoryIconRef.current, {
+        rotate: isOpen ? 0 : 10, // 開くときに少し回転戻す、閉じるときに少し回転
+        scale: isOpen ? 1 : 1.1, // 開くときに通常サイズ、閉じるときに少し拡大
+        duration: 0.3,
+        ease: 'back.out(1.7)'
+      });
+    }
   };
 
   useEffect(() => {
@@ -21,40 +68,42 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
       gsap.to(contentRef.current, {
         height: isOpen ? 'auto' : 0,
         opacity: isOpen ? 1 : 0,
-        duration: 0.4, // Slightly increased duration for smoother feel
-        ease: 'power3.inOut', // Smoother easing
+        duration: 0.4, 
+        ease: 'power3.inOut',
         onComplete: () => {
+          // Scroll to top of content if it becomes too long, or other adjustments
         }
       });
     }
     if (isOpen && itemsRef.current.length > 0) {
-      gsap.fromTo(itemsRef.current.filter(el => el),
-        { opacity: 0, y: 10, scale: 0.98 }, // Start slightly lower and smaller, reduce y from 15 to 10
-        { opacity: 1, y: 0, scale: 1, duration: 0.3, stagger: 0.07, delay: 0.05, ease: 'back.out(1.1)' } // reduce duration, stagger, delay and ease
+      gsap.fromTo(itemsRef.current.filter(el => el), 
+        { opacity: 0, y: 15, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.35, stagger: 0.08, delay: 0.1, ease: 'power2.out' } 
       );
     }
   }, [isOpen]);
 
-  const handleItemClick = (item) => {
-    if (onBenefitClick) {
-      const currentCategoryName = category === '病気・ケガの保障' ? '医療・重い病気の保障' : category;
-      onBenefitClick({ ...item, category: currentCategoryName });
-    }
+  const handleItemClick = (item, event) => {
+    const cardElement = event.currentTarget;
+    gsap.timeline()
+      .to(cardElement, { scale: 1.05, y: -5, boxShadow: "0px 8px 15px rgba(0,0,0,0.1)", duration: 0.15, ease: 'power2.out' })
+      .to(cardElement, { scale: 1, y: 0, boxShadow: "0px 4px 6px rgba(0,0,0,0.05)", duration: 0.2, ease: 'bounce.out', onComplete: () => {
+        if (onBenefitClick) {
+          const currentCategoryName = category === '病気・ケガの保障' ? '医療・重い病気の保障' : category;
+          onBenefitClick({ ...item, categoryNameForAi: currentCategoryName });
+        }
+      }});
   };
 
   const displayCategoryName = category === '病気・ケガの保障' ? '医療・重い病気の保障' : category;
   let displayIconClass = iconClass;
 
-  // Compact header style
-  let headerBaseClass = 'text-xs font-semibold p-2 px-3 flex items-center justify-between cursor-pointer transition-all duration-300 ease-in-out rounded-t-lg group'; // Reduced padding & font size
+  let headerBaseClass = 'text-base font-semibold p-2.5 px-3 flex items-center justify-between cursor-pointer transition-all duration-300 ease-in-out rounded-t-lg group';
   let headerIconColor = 'text-gray-600';
   let chevronColor = 'text-gray-500';
-  let valueColor = 'text-gray-800'; // This will be overridden for protection/savings
-  let headerBgClass = 'bg-slate-100 hover:bg-slate-200 border-b border-slate-300'; // Default simple BG
+  let valueColor = 'text-gray-800';
+  let headerBgClass = 'bg-slate-100 hover:bg-slate-200 border-b border-slate-300';
   let headerTitleColor = 'text-slate-700';
-
-  // Define base hover classes for items, to be specialized later
-  // let itemHoverBgBase = 'hover:bg-opacity-20'; // Base for colored hover
 
   if (categoryType === 'protection') {
     displayIconClass = category === '病気・ケガの保障' ? 'fas fa-stethoscope' : iconClass;
@@ -65,7 +114,6 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
     chevronColor = isOpen ? 'text-emerald-500 group-hover:text-emerald-700' : 'text-emerald-400 group-hover:text-emerald-600';
     valueColor = 'text-emerald-700 font-semibold';
     headerTitleColor = 'text-emerald-800 font-medium';
-    // itemHoverBgBase = 'hover:bg-sky-100'; // Will be specialized
   } else if (categoryType === 'savings') {
     displayIconClass = iconClass;
     headerBgClass = isOpen
@@ -75,12 +123,10 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
     chevronColor = isOpen ? 'text-amber-500 group-hover:text-amber-700' : 'text-amber-400 group-hover:text-amber-600';
     valueColor = 'text-amber-700 font-semibold';
     headerTitleColor = 'text-amber-800 font-medium';
-    // itemHoverBgBase = 'hover:bg-amber-100'; // Will be specialized
   }
 
   itemsRef.current = [];
 
-  // Function to get specific hover class based on sub-category/item type
   const getItemHoverClass = (subCategoryType) => {
     switch (subCategoryType) {
       case 'death': return `hover:bg-sky-50 hover:border-sky-300`;
@@ -92,20 +138,66 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
     }
   };
 
+  let categoryPremium = 0;
+  if (planData) {
+    if (category === '万一・就業不能の保障') {
+      categoryPremium = 
+        getDummyPremiumApproximation(planData.deathLumpsum || 0, 'deathLump') +
+        getDummyPremiumApproximation(planData.deathAnnuity || 0, 'deathAnn') +
+        getDummyPremiumApproximation(planData.disabilityLumpsum || 0, 'disLump') +
+        getDummyPremiumApproximation(planData.disabilityMonthly || 0, 'disMonth');
+    } else if (category === '病気・ケガの保障') {
+      categoryPremium = 
+        getDummyPremiumApproximation(planData.medicalDaily || 0, 'medDaily') +
+        getDummyPremiumApproximation(planData.medicalSurgery || 0, 'medSurgery') +
+        getDummyPremiumApproximation(planData.criticalCancer || 0, 'critCancer') +
+        getDummyPremiumApproximation(planData.criticalCirculatory || 0, 'critCirc');
+    } else if (category === '将来への準備（貯蓄）') {
+      categoryPremium = getDummyPremiumApproximation(planData.savingsMonthly || 0, 'savings');
+    }
+  }
+
+  // カテゴリ保険料のカウントアップアニメーション
+  useEffect(() => {
+    if (categoryPremiumRef.current && categoryPremium > 0) {
+      const fromValue = parseFloat(categoryPremiumRef.current.textContent.replace(/[^0-9.-]+/g,'') || '0');
+      const animObject = { value: fromValue };
+      gsap.to(animObject, {
+        value: categoryPremium,
+        duration: 0.8, 
+        ease: 'power2.out',
+        onUpdate: () => {
+          if (categoryPremiumRef.current) {
+            categoryPremiumRef.current.textContent = Math.round(animObject.value).toLocaleString();
+          }
+        }
+      });
+    }
+  }, [categoryPremium]);
 
   return (
     <div className="benefit-category bg-white rounded-lg overflow-hidden shadow-md border border-gray-200 hover:shadow-slate-300/60 transition-all duration-300 ease-out transform hover:-translate-y-px">
       <h3
         ref={headerRef}
-        className={`text-lg font-semibold p-3 px-4 flex items-center justify-between cursor-pointer transition-all duration-300 ease-in-out rounded-t-lg group ${headerBgClass} border-b-2`}
+        className={`text-base font-semibold p-2.5 px-3 flex items-center justify-between cursor-pointer transition-all duration-300 ease-in-out rounded-t-lg group ${headerBgClass} border-b-2`}
         onClick={handleToggle}
         title={`${displayCategoryName} の詳細を${isOpen ? '閉じる' : '開く'}`}
       >
         <span className="flex items-center">
-          <i className={`${displayIconClass} mr-2.5 w-5 text-center text-xl ${headerIconColor} transition-transform duration-300 ${isOpen ? 'group-hover:scale-105' : 'group-hover:scale-100'}`}></i>
-          <span className={`${headerTitleColor} text-lg font-bold`}>{displayCategoryName}</span>
+          <i ref={categoryIconRef} className={`${displayIconClass} mr-2 w-4.5 text-center text-lg ${headerIconColor} transition-transform duration-300 ${isOpen ? 'group-hover:scale-105' : 'group-hover:scale-100'}`}></i>
+          <span className={`${headerTitleColor} text-base font-bold`}>{displayCategoryName}</span>
         </span>
-        <i className={`fas fa-chevron-down text-sm ${chevronColor} transition-transform duration-300 ease-in-out ${isOpen ? 'rotate-180' : 'rotate-0'} group-hover:scale-110`}></i>
+        <div className="flex items-center">
+          {categoryPremium > 0 && (
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shadow-sm mr-2 tabular-nums tracking-tight 
+                            ${categoryType === 'protection' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 
+                              categoryType === 'savings' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-gray-100 text-gray-700'}
+                           `}>
+              月払: <span ref={categoryPremiumRef}>{Math.round(categoryPremium).toLocaleString()}</span>円
+            </span>
+          )}
+          <i className={`fas fa-chevron-down text-xs ${chevronColor} transition-transform duration-300 ease-in-out ${isOpen ? 'rotate-180' : 'rotate-0'} group-hover:scale-110`}></i>
+        </div>
       </h3>
       <div ref={contentRef} className="product-category-content p-2.5 space-y-2 text-xs overflow-hidden bg-slate-50/20 border-t border-gray-200" style={{ height: isOpen ? 'auto' : '0px', opacity: isOpen ? 1: 0}}>
         {(categoryType === 'protection' && category === '万一・就業不能の保障') && (
@@ -118,8 +210,8 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
             const validDisabilityItems = [disLump, disMonth].filter(i => i?.value > 0);
             if (validDeathItems.length === 0 && validDisabilityItems.length === 0) {
                 return (
-                    <div className="text-center py-2 px-1.5">
-                        <i className="fas fa-empty-set text-2xl text-gray-400 mb-1"></i>
+                    <div className="text-center py-2 px-1.5 flex flex-col items-center justify-center min-h-[80px]">
+                        <img src="/pentan_confused.png" alt="保障なしペンタン" className="h-12 w-12 mb-2 opacity-70" />
                         <p className="text-[10px] text-gray-500 italic">このカテゴリの登録保障はありません。</p>
                     </div>
                 );
@@ -127,17 +219,17 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
             return (
               <div className="grid grid-cols-1 gap-2">
                 {validDeathItems.length > 0 && (
-                  <div className="flex items-stretch rounded-md overflow-hidden shadow-sm border border-sky-200/70 hover:shadow-md transition-shadow duration-200">
+                  <div className="flex items-stretch rounded-md overflow-hidden shadow-sm border border-sky-200/70 hover:shadow-md transition-shadow duration-200 bg-sky-50/70">
                     <div className="w-8 bg-sky-100 text-sky-700 flex items-center justify-center">
-                      <span className="vertical-rl transform rotate-90 text-[10px] font-semibold tracking-normal p-0.5 whitespace-nowrap">死亡保障</span>
+                      <span className="vertical-rl transform rotate-90 text-[11px] font-semibold tracking-normal p-0.5 whitespace-nowrap">死亡保障</span>
                     </div>
                     <div className="flex-grow space-y-0.5 p-1 bg-sky-50/50 ">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                         {deathLump?.value > 0 && (
                           <div
                             key={deathLump.key}
-                            className={`benefit-item-card flex flex-col items-start p-1.5 rounded border border-gray-100 cursor-pointer bg-white ${getItemHoverClass('death')}`}
-                            onClick={() => handleItemClick(deathLump)}
+                            className={`benefit-item-card flex flex-col items-start p-1 rounded border border-gray-100 cursor-pointer bg-white ${getItemHoverClass('death')}`}
+                            onClick={(e) => handleItemClick(deathLump, e)}
                             title={`${deathLump.label} の詳細`}
                             ref={el => itemsRef.current.push(el)}
                           >
@@ -145,7 +237,7 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
                               <i className={`fas fa-sack-dollar text-indigo-500 w-3.5 text-center mr-1.5 text-sm p-0.5 bg-indigo-50/70 rounded-sm`}></i>
                               <span className="font-medium">{deathLump.label}</span>
                             </span>
-                            <span className={`font-semibold ${valueColor} text-base ml-4`}>
+                            <span className={`font-semibold ${valueColor} text-sm ml-3`}>
                               {deathLump.value.toLocaleString()}{deathLump.unit}
                             </span>
                           </div>
@@ -153,8 +245,8 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
                         {deathAnn?.value > 0 && (
                           <div
                             key={deathAnn.key}
-                            className={`benefit-item-card flex flex-col items-start p-1.5 rounded border border-gray-100 cursor-pointer bg-white ${getItemHoverClass('death')}`}
-                            onClick={() => handleItemClick(deathAnn)}
+                            className={`benefit-item-card flex flex-col items-start p-1 rounded border border-gray-100 cursor-pointer bg-white ${getItemHoverClass('death')}`}
+                            onClick={(e) => handleItemClick(deathAnn, e)}
                             title={`${deathAnn.label} の詳細`}
                             ref={el => itemsRef.current.push(el)}
                           >
@@ -162,7 +254,7 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
                               <i className={`fas fa-hand-holding-dollar text-sky-500 w-3.5 text-center mr-1.5 text-sm p-0.5 bg-sky-50/70 rounded-sm`}></i>
                               <span className="font-medium">{deathAnn.label}</span>
                             </span>
-                            <span className={`font-semibold ${valueColor} text-base ml-4`}>
+                            <span className={`font-semibold ${valueColor} text-sm ml-3`}>
                               {deathAnn.value.toLocaleString()}{deathAnn.unit}
                             </span>
                           </div>
@@ -174,17 +266,17 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
                 )}
 
                 {validDisabilityItems.length > 0 && (
-                  <div className="flex items-stretch rounded-md overflow-hidden shadow-sm border border-lime-200/70 hover:shadow-md transition-shadow duration-200">
+                  <div className="flex items-stretch rounded-md overflow-hidden shadow-sm border border-lime-200/70 hover:shadow-md transition-shadow duration-200 bg-lime-50/70">
                     <div className="w-8 bg-lime-100 text-lime-700 flex items-center justify-center">
-                      <span className="transform rotate-90 text-[10px] font-semibold tracking-normal p-0.5 whitespace-nowrap">就業不能</span>
+                      <span className="transform rotate-90 text-[11px] font-semibold tracking-normal p-0.5 whitespace-nowrap">就業不能</span>
                     </div>
                     <div className="flex-grow space-y-0.5 p-1 bg-lime-50/50">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                         {disLump?.value > 0 && (
                           <div
                             key={disLump.key}
-                            className={`benefit-item-card flex flex-col items-start p-1.5 rounded border border-gray-100 cursor-pointer bg-white ${getItemHoverClass('disability')}`}
-                            onClick={() => handleItemClick(disLump)}
+                            className={`benefit-item-card flex flex-col items-start p-1 rounded border border-gray-100 cursor-pointer bg-white ${getItemHoverClass('disability')}`}
+                            onClick={(e) => handleItemClick(disLump, e)}
                             title={`${disLump.label} の詳細`}
                             ref={el => itemsRef.current.push(el)}
                           >
@@ -192,7 +284,7 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
                               <i className={`fas fa-briefcase-medical text-orange-500 w-3.5 text-center mr-1.5 text-sm p-0.5 bg-orange-50/70 rounded-sm`}></i>
                               <span className="font-medium">{disLump.label}</span>
                             </span>
-                            <span className={`font-semibold ${valueColor} text-base ml-4`}>
+                            <span className={`font-semibold ${valueColor} text-sm ml-3`}>
                               {disLump.value.toLocaleString()}{disLump.unit}
                             </span>
                           </div>
@@ -200,8 +292,8 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
                         {disMonth?.value > 0 && (
                           <div
                             key={disMonth.key}
-                            className={`benefit-item-card flex flex-col items-start p-1.5 rounded border border-gray-100 cursor-pointer bg-white ${getItemHoverClass('disability')}`}
-                            onClick={() => handleItemClick(disMonth)}
+                            className={`benefit-item-card flex flex-col items-start p-1 rounded border border-gray-100 cursor-pointer bg-white ${getItemHoverClass('disability')}`}
+                            onClick={(e) => handleItemClick(disMonth, e)}
                             title={`${disMonth.label} の詳細`}
                             ref={el => itemsRef.current.push(el)}
                           >
@@ -209,7 +301,7 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
                               <i className={`fas fa-money-bill-wave text-rose-500 w-3.5 text-center mr-1.5 text-sm p-0.5 bg-rose-50/70 rounded-sm`}></i>
                               <span className="font-medium">{disMonth.label}</span>
                             </span>
-                            <span className={`font-semibold ${valueColor} text-base ml-4`}>
+                            <span className={`font-semibold ${valueColor} text-sm ml-3`}>
                               {disMonth.value.toLocaleString()}{disMonth.unit}
                             </span>
                           </div>
@@ -237,16 +329,15 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
                 Object.keys(medicalBenefitMap).forEach(key => {
                     if (includedMedicalKeys.includes(key)) {
                         const config = medicalBenefitMap[key];
-                        // Try to get value from planData if key exists, otherwise use getValue
                         let value = planData?.[key] !== undefined ? planData[key] : config.getValue(planData || {});
-                        if (key === 'lumpSum' && !planData?.medicalLumpSum) value = 10; // Keep example if not in data
+                        if (key === 'lumpSum' && !planData?.medicalLumpSum) value = 10;
 
                         const unit = config.unit || '';
                         const displayValue = (typeof value === 'number' && value > 0) ? `${value.toLocaleString()}${unit}` : (value || '-');
                         const itemForClick = {
                             key: key,
                             label: config.label,
-                            value: (typeof value === 'number' ? value : (key === 'lumpSum' ? 10 : undefined)), // ensure lumpSum has a value for click if not in data
+                            value: (typeof value === 'number' ? value : (key === 'lumpSum' ? 10 : undefined)),
                             unit: unit,
                             description: (typeof value !== 'number' ? value : undefined),
                             iconClassFromMap: config.icon,
@@ -255,19 +346,14 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
                         medicalElements.push(
                             <div
                                 key={key}
-                                itemData={itemForClick} // Store itemData here
-                                // className={`benefit-item flex items-center justify-between p-2 rounded-md ${itemHoverBgClass} shadow-sm border border-gray-100 cursor-pointer transform transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 bg-white`}
-                                // onClick={() => handleItemClick(itemForClick)}
-                                // title={`${config.label} の詳細を見る`}
-                                // ref={el => itemsRef.current.push(el)}
+                                itemData={itemForClick} 
                             >
-                                {/* Content will be mapped later into cards */}
                             </div>
                         );
                     }
                 });
                 const validCriticalItems = items.filter(i => i?.value > 0);
-                let criticalElementsData = []; // Store data for critical elements
+                let criticalElementsData = []; 
                 validCriticalItems.forEach(item => {
                     let iconClassCrit = 'fa-heart-pulse text-gray-400';
                     if (item.key === 'criticalCancer') iconClassCrit = 'fa-disease text-pink-600';
@@ -281,8 +367,8 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
 
                 if (medicalElements.length === 0 && criticalElementsData.length === 0) {
                     return (
-                        <div className="text-center py-3 px-2">
-                            <i className="fas fa-empty-set text-3xl text-gray-400 mb-1.5"></i>
+                        <div className="text-center py-3 px-2 flex flex-col items-center justify-center min-h-[80px]">
+                            <img src="/pentan_empty.png" alt="保障なしペンタン" className="h-12 w-12 mb-1.5 opacity-75" /> 
                             <p className="text-xs text-gray-500 italic">このカテゴリには現在ご加入の保障はありません。</p>
                         </div>
                     );
@@ -290,25 +376,25 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
                 return (
                     <div className="grid grid-cols-1 gap-2">
                         {medicalElements.length > 0 && (
-                          <div className="flex items-stretch rounded-md overflow-hidden shadow-sm border border-teal-200/70 hover:shadow-md transition-shadow duration-200">
+                          <div className="flex items-stretch rounded-md overflow-hidden shadow-sm border border-teal-200/70 hover:shadow-md transition-shadow duration-200 bg-teal-50/70">
                             <div className="w-8 bg-teal-100 text-teal-700 flex items-center justify-center">
-                               <span className="writing-mode-vertical-rl transform rotate-90 text-[10px] font-semibold tracking-normal p-0.5 whitespace-nowrap">医療保障</span>
+                               <span className="writing-mode-vertical-rl transform rotate-90 text-[11px] font-semibold tracking-normal p-0.5 whitespace-nowrap">医療保障</span>
                             </div>
                             <div className="flex-grow space-y-0.5 p-1 bg-teal-50/50">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                  {medicalElements.map(elPlaceholder => { // elPlaceholder contains itemData
-                                    const el = elPlaceholder.props.itemData; // Access itemData
+                                  {medicalElements.map(elPlaceholder => { 
+                                    const el = elPlaceholder.props.itemData; 
                                     return (
                                     <div key={el.key} 
                                          className={`min-w-0 benefit-item-card bg-white p-1.5 rounded border border-gray-100 cursor-pointer transform transition-all duration-200 flex flex-col items-start ${getItemHoverClass('medical')}`}
-                                         onClick={() => handleItemClick(el)}
+                                         onClick={(e) => handleItemClick(el, e)}
                                          title={`${el.label} の詳細を見る`}
                                          ref={itemEl => itemsRef.current.push(itemEl)}>
                                       <span className="flex items-center text-gray-700 text-xs">
                                         <i className={`fas ${el.iconClassFromMap || 'fa-shield-alt text-gray-400'} w-3.5 text-center mr-1.5 text-sm`}></i>
                                         <span className="font-medium">{el.label}:</span>
                                       </span>
-                                      <span className={`font-medium ${valueColor} ml-4 text-base`}>
+                                      <span className={`font-medium ${valueColor} text-sm ml-3`}>
                                         {el.displayValue}
                                       </span>
                                     </div>
@@ -320,23 +406,23 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
                           </div>
                         )}
                         {criticalElementsData.length > 0 && (
-                           <div className="flex items-stretch mt-1.5 rounded-md overflow-hidden shadow-sm border border-orange-200/70 hover:shadow-md transition-shadow duration-200">
+                           <div className="flex items-stretch mt-1.5 rounded-md overflow-hidden shadow-sm border border-orange-200/70 hover:shadow-md transition-shadow duration-200 bg-orange-50/70">
                             <div className="w-8 bg-orange-100 text-orange-700 flex items-center justify-center">
-                               <span className="writing-mode-vertical-rl transform rotate-90 text-[10px] font-semibold tracking-normal p-0.5 whitespace-nowrap">重い病気</span>
+                               <span className="writing-mode-vertical-rl transform rotate-90 text-[11px] font-semibold tracking-normal p-0.5 whitespace-nowrap">重い病気</span>
                             </div>
                             <div className="flex-grow space-y-0.5 p-1 bg-orange-50/50">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                  {criticalElementsData.map(el => // el is already item data
+                                  {criticalElementsData.map(el => 
                                     <div key={el.key} 
                                          className={`min-w-0 benefit-item-card bg-white p-1.5 rounded border border-gray-100 cursor-pointer transform transition-all duration-200 flex flex-col items-start ${getItemHoverClass('critical')}`}
-                                         onClick={() => handleItemClick(el)}
+                                         onClick={(e) => handleItemClick(el, e)}
                                          title={`${el.label} の詳細を見る`}
                                          ref={itemEl => itemsRef.current.push(itemEl)}>
                                        <span className="flex items-center text-gray-700 text-xs">
                                         <i className={`fas ${el.iconClassCrit || 'fa-heart-pulse text-gray-400'} w-3.5 text-center mr-1.5 text-sm`}></i>
                                         <span className="font-medium">{el.label}:</span>
                                       </span>
-                                      <span className={`font-medium ${valueColor} ml-4 text-base`}>
+                                      <span className={`font-medium ${valueColor} text-sm ml-3`}>
                                         {el.value.toLocaleString()}{el.unit}
                                       </span>
                                     </div>
@@ -352,12 +438,12 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
         )}
         {(categoryType === 'savings' && category === '将来への準備（貯蓄）') && (
             validItems.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-2 bg-amber-50/70 rounded-md p-1.5 border border-amber-200/70 shadow-sm">
                     {validItems.map((item) => (
                         <div 
                             key={item.key} 
                             className={`benefit-item-card flex items-center justify-between p-2.5 rounded-lg shadow-md border border-gray-200 cursor-pointer transform transition-all duration-200 hover:shadow-lg hover:-translate-y-1 bg-white ${getItemHoverClass('savings_item')}`}
-                            onClick={() => handleItemClick(item)} 
+                            onClick={(e) => handleItemClick(item, e)} 
                             title={`${item.label} の詳細・関連情報を見る`} 
                             ref={el => itemsRef.current.push(el)}
                         >
@@ -368,15 +454,15 @@ const RenderBenefitCategory = ({ category, iconClass, items, onBenefitClick, pla
                             <span className={`font-bold ${valueColor} ml-2 text-base`}>
                                 {item.value.toLocaleString()}{item.unit || ''}
                                 {item.key === 'savingsMonthly' && item.value === 35000 &&
-                                <span className="text-xs text-gray-500 ml-1.5">(子1 15,000円 + 子2 20,000円)</span>
+                                <span className="text-xs text-gray-500 ml-1">(子1 15,000円 + 子2 20,000円)</span>
                                 }
                             </span>
                         </div>
                     ))}
                 </div>
             ) : (
-                <div className="text-center py-3 px-2">
-                    <i className="fas fa-empty-set text-3xl text-gray-400 mb-1.5"></i>
+                <div className="text-center py-3 px-2 flex flex-col items-center justify-center min-h-[80px]">
+                     <img src="/pentan_savings_empty.png" alt="積立なしペンタン" className="h-14 w-14 mb-1 opacity-80" />
                     <p className="text-xs text-gray-500 italic">このカテゴリには現在ご加入の保障はありません。</p>
                 </div>
             )
@@ -432,6 +518,7 @@ function PlanDetails({
   const planDetailsSectionRef = useRef(null);
   const planNameRef = useRef(null);
   const benefitCategoriesRef = useRef(null);
+  const planButtonsRef = useRef(null); // プランボタンのコンテナ参照
 
   const displayPlanInfo = currentPlanContext === 'custom'
     ? { name: "カスタムプラン", description: "スライダーで調整された、あなただけのプランです。", benefitKeywords: ["custom_needs"] }
@@ -451,52 +538,35 @@ function PlanDetails({
         return; 
     }
 
-    // Entrance animation for the entire section
-    // Ensure initial state is set for fromTo if not already handled by opacity-0 className
-    gsap.set(sectionEl, { opacity: 0, y: 50, scale: 0.95 }); 
-    gsap.to(sectionEl, // Changed from fromTo to just to, as initial state is set above
-      { 
-        opacity: 1, 
-        y: 0, 
-        scale: 1, 
-        duration: 0.8, 
-        ease: 'power3.out', 
-        clearProps: "transform", // Only clear transform, let GSAP handle opacity until next animation or manual set
-        onStart: () => {},
-        onComplete: () => {
-            gsap.set(sectionEl, { opacity: 1 }); // Force opacity to 1
-        }
-      }
+    // GSAPタイムラインを作成
+    const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+
+    tl.fromTo(sectionEl, 
+      { opacity: 0, y: 50, scale: 0.95 }, 
+      { opacity: 1, y: 0, scale: 1, duration: 0.6, clearProps: "transform" } 
     );
 
-    // Plan name animation (runs after section entrance)
     if (nameEl && displayPlanInfo.name && displayPlanInfo.name !== "プラン読込中...") {
-      gsap.fromTo(nameEl, 
-        { opacity: 0, x: -20, y: 0 }, // Initial state: invisible and slightly to the left
-        { 
-          opacity: 1, 
-          x: 0, 
-          duration: 0.6, 
-          ease: 'power2.out',
-          delay: 0.4, // Delay to start after section entrance animation has progressed
-          onStart: () => { if(nameEl) nameEl.textContent = displayPlanInfo.name; }
-        }
+      tl.fromTo(nameEl, 
+        { opacity: 0, x: -20 }, 
+        { opacity: 1, x: 0, duration: 0.5, onStart: () => { if(nameEl) nameEl.textContent = displayPlanInfo.name; } }, 
+        "-=0.3" // 前のアニメーションと少しオーバーラップ
       );
     } 
+    // プランボタンのアニメーション
+    if (planButtonsRef.current && planButtonsRef.current.children.length > 0) {
+      tl.fromTo(Array.from(planButtonsRef.current.children).filter(el => el),
+        { opacity: 0, y: 20, scale: 0.9 },
+        { opacity: 1, y: 0, scale: 1, stagger: 0.1, duration: 0.4 },
+        "-=0.2"
+      );
+    }
 
-    // Benefit categories animation (staggered, runs after section entrance)
     if (categoriesEl && categoriesEl.children.length > 0) {
-      gsap.fromTo(Array.from(categoriesEl.children).filter(el => el), 
-          { opacity:0, y:30, scale: 0.98 }, // Start items from lower, slightly smaller
-          { 
-            opacity:1, 
-            y:0, 
-            scale: 1,
-            stagger: 0.15, // Slightly increased stagger for more distinct appearance
-            duration:0.6, 
-            delay: 0.5, // Delay to start after section entrance
-            ease: 'back.out(1.4)', // More dynamic pop-out effect
-          }
+      tl.fromTo(Array.from(categoriesEl.children).filter(el => el), 
+          { opacity:0, y:30, scale: 0.98 }, 
+          { opacity:1, y:0, scale: 1, stagger: 0.12, duration:0.5, ease: 'back.out(1.2)' }, 
+          "-=0.2" 
       );
     } 
 
@@ -515,7 +585,7 @@ function PlanDetails({
   ];
 
   const futureSavingsItems = [
-    { label: '月額積立', value: planData?.savingsMonthly || 0, unit: '円/月', key: 'savingsMonthly' },
+    { label: '積立額', value: planData?.savingsMonthly || 0, unit: '円/月', key: 'savingsMonthly' },
   ];
 
   const tags = getBenefitTags(displayPlanInfo.benefitKeywords, userTags);
@@ -526,16 +596,23 @@ function PlanDetails({
     }
   }, [onBenefitClick]);
 
-  const handleLoadPlan = (planKey) => {
+  const handleLoadPlan = (planKey, event) => {
     const sectionEl = planDetailsSectionRef.current;
+    const buttonEl = event?.currentTarget;
+
+    const tl = gsap.timeline();
+    if (buttonEl) {
+      tl.to(buttonEl, { scale: 0.95, yoyo: true, repeat: 1, duration: 0.15, ease: 'power1.inOut' });
+    }
+
     if (sectionEl) {
-       gsap.to(sectionEl, { 
+       tl.to(sectionEl, { 
          opacity: 0, y: -20, scale: 0.95, duration: 0.35, ease: 'power2.in',
          onStart: () => {},
          onComplete: () => {
            onLoadPlan(planKey);
          }
-       });
+       }, buttonEl ? ">-0.1" : ">0"); // ボタンアニメーションがあれば少し遅らせる
     } else {
         onLoadPlan(planKey);
     }
@@ -561,48 +638,63 @@ function PlanDetails({
     <section 
       ref={planDetailsSectionRef} 
       id="plan-details-section" 
-      className="module flex flex-col bg-gradient-to-br from-slate-50 to-gray-100 border border-gray-200 rounded-xl p-5 md:p-6 shadow-2xl hover:shadow-blue-200/50 transition-all duration-500 ease-in-out opacity-0"
+      className="module flex flex-col bg-gradient-to-br from-slate-50 to-gray-100 border border-gray-200 rounded-xl p-2 md:p-4 shadow-2xl hover:shadow-blue-200/50 transition-all duration-500 ease-in-out opacity-0"
     >
       {/* Header Section for Plan Name and Buttons */}
-      <div className="plan-header-block flex flex-col items-start mb-5 pb-4 border-b-2 border-emerald-600"> 
-        <div className="flex items-baseline mb-3.5"> 
-          <i className="fas fa-clipboard-check mr-3 text-4xl text-emerald-500"></i> {/* Icon changed & size increased */}
-          <h2 ref={planNameRef} className="text-3xl font-extrabold text-emerald-700 m-0 tracking-tight">
-            {displayPlanInfo.name}
+      <div className="plan-header-block flex flex-col items-start">
+        <div className="flex items-center justify-center w-full">
+          
+          <h2 ref={planNameRef} className="text-xl font-bold text-green-800 border-b-2 border-green-800 pb-1 mb-2 text-center flex-grow">
+          <i className="fas fa-compass mr-3 text-emerald-600 text-xl"></i>
+            {/* {displayPlanInfo.name} GSAPで設定されるため初期は空でも良い */}
           </h2>
-        </div>
-        <div className="plan-buttons w-full flex flex-wrap items-center justify-start gap-2.5">
-          {[
-            { key: 'recommended', label: '推奨' }, 
-            { key: 'premier', label: 'プレミア' }, 
-            { key: 'lifeProtectionFocus', label: '生活重視' }, 
-            { key: 'medicalFocus', label: '医療重視' }
-          ].map(plan => {
-            const isActive = currentPlanContext === plan.key;
-            const icon = planButtonIcons[plan.key] || 'fa-question-circle';
-            let buttonClass = `flex items-center gap-1 py-2 px-2 text-xs sm:text-sm font-semibold border rounded-lg transition-all duration-300 ease-in-out shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-50 `;
-            if (isActive) {
-              buttonClass += 'bg-gradient-to-br from-emerald-500 to-green-600 text-white border-emerald-700 ring-emerald-400 scale-105 shadow-xl';
-            } else {
-              buttonClass += 'bg-white text-gray-600 border-gray-300 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700 focus:ring-emerald-400 hover:shadow-md';
-            }
-            return (
-              <button 
-                key={plan.key} 
-                onClick={() => handleLoadPlan(plan.key)} 
-                className={buttonClass}
-                title={`${plan.label}プランの詳細を見る`}
-              >
-                <i className={`fas ${icon} ${isActive ? 'text-yellow-300 animate-pulse_fast' : 'text-emerald-600 group-hover:text-emerald-500'} text-sm sm:text-base transition-colors duration-300`}></i> 
-                <span className="tracking-wide">{plan.label}</span>
-              </button>
-            );
-          })}
         </div>
       </div>
 
+      <div ref={planButtonsRef} className="plan-buttons w-full flex flex-wrap items-center justify-start gap-4 mb-2 ml-2">
+        {[
+          { key: 'recommended', label: '推奨' }, 
+          { key: 'premier', label: 'プレミア' }, 
+          { key: 'lifeProtectionFocus', label: '生活重視' }, 
+          { key: 'medicalFocus', label: '医療重視' }
+        ].map(plan => {
+          const isActive = currentPlanContext === plan.key;
+          const icon = planButtonIcons[plan.key] || 'fa-question-circle';
+          let buttonClass = `flex items-center gap-1 py-1 px-2 text-xs font-semibold border rounded-lg transition-all duration-300 ease-in-out shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-50 `;
+          if (isActive) {
+            buttonClass += 'bg-gradient-to-br from-emerald-500 to-green-600 text-white border-emerald-700 ring-emerald-400 scale-105 shadow-xl';
+          } else {
+            buttonClass += 'bg-white text-gray-600 border-gray-300 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700 focus:ring-emerald-400 hover:shadow-md';
+          }
+          // GSAP ホバーエフェクト用のイベントハンドラ
+          const handleButtonHover = (e, isHovering) => {
+            gsap.to(e.currentTarget, {
+              y: isHovering ? -3 : 0,
+              scale: isHovering ? 1.08 : (isActive ? 1.05 : 1),
+              boxShadow: isHovering ? "0px 10px 20px rgba(0,0,0,0.1)" : "0px 5px 10px rgba(0,0,0,0.05)",
+              duration: 0.2,
+              ease: 'power2.out'
+            });
+          };
+
+          return (
+            <button 
+              key={plan.key} 
+              onClick={(e) => handleLoadPlan(plan.key, e)} 
+              className={buttonClass}
+              title={`${plan.label}プランの詳細を見る`}
+              onMouseEnter={(e) => handleButtonHover(e, true)}
+              onMouseLeave={(e) => handleButtonHover(e, false)}
+            >
+              <i className={`fas ${icon} ${isActive ? 'text-yellow-300 animate-pulse_fast' : 'text-emerald-600 group-hover:text-emerald-500'} text-xs transition-colors duration-300`}></i>
+              <span className="tracking-wide">{plan.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="plan-details-content flex-grow flex flex-col">
-        <div ref={benefitCategoriesRef} id="benefit-details-area" className="benefit-details-by-category flex-grow space-y-4"> {/* Added space-y-4 for spacing */}
+        <div ref={benefitCategoriesRef} id="benefit-details-area" className="benefit-details-by-category flex-grow space-y-4">
           <RenderBenefitCategory
             category="万一・就業不能の保障"
             iconClass="fas fa-umbrella"
@@ -610,6 +702,8 @@ function PlanDetails({
             planData={planData}
             onBenefitClick={handleBenefitClick}
             categoryType="protection"
+            currentPlanContext={currentPlanContext}
+            currentPlanName={officialPlanData?.name || (currentPlanContext === 'custom' ? 'カスタムプラン' : (currentPlanContext === 'recommended' ? '推奨プラン' : 'プラン'))}
           />
           <RenderBenefitCategory
             category="病気・ケガの保障"
@@ -618,6 +712,8 @@ function PlanDetails({
             planData={planData}
             onBenefitClick={handleBenefitClick}
             categoryType="protection"
+            currentPlanContext={currentPlanContext}
+            currentPlanName={officialPlanData?.name || (currentPlanContext === 'custom' ? 'カスタムプラン' : (currentPlanContext === 'recommended' ? '推奨プラン' : 'プラン'))}
           />
           <RenderBenefitCategory
             category="将来への準備（貯蓄）"
@@ -626,6 +722,8 @@ function PlanDetails({
             planData={planData}
             onBenefitClick={handleBenefitClick}
             categoryType="savings"
+            currentPlanContext={currentPlanContext}
+            currentPlanName={officialPlanData?.name || (currentPlanContext === 'custom' ? 'カスタムプラン' : (currentPlanContext === 'recommended' ? '推奨プラン' : 'プラン'))}
           />
         </div>
       </div>

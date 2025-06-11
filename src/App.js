@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import './App.css'; // App.cssをインポート
 
 // Import components
 // 作成したコンポーネントをインポート
@@ -95,11 +96,12 @@ function App() {
   const {
     isAiConciergeOpen,
     aiMessage,
-    toggleAiConcierge,
+    toggleAiConcierge: originalToggleAiConcierge, // Rename original toggle
     handleCloseAiConcierge,
     updateAiMessage,
     showOtherContractGuide,    // useAiConcierge から取得
     showCoverageDetailGuide, // useAiConcierge から取得
+    showRichBenefitDetailGuide // ★ 新しいハンドラをインポート
   } = useAiConcierge();
 
   const {
@@ -246,8 +248,14 @@ function App() {
           break;
       default: output = `<p>何かお手伝いできることはありますか？<img src="pentan.png" alt="ペンタン" class="pentan-icon h-4 inline-block ml-1"></p>`;
     }
-    updateAiMessage(output);
-  }, [updateAiMessage]); // 依存配列から currentPlanContext を削除
+    // updateAiMessage(output); // 元の呼び出し箇所
+    // 修正: プラン選択・スライダー調整時で、かつAIコンシェルジュが閉じていなければメッセージ更新を抑制
+    if ((context === 'plan_select' || context === 'slider_adjust') && !isAiConciergeOpen) {
+      // 何もしない
+    } else {
+      updateAiMessage(output);
+    }
+  }, [updateAiMessage, isAiConciergeOpen]); // 依存配列から currentPlanContext を削除し、isAiConciergeOpen を追加
 
   const {
     simulatedData,
@@ -272,6 +280,19 @@ function App() {
       mainGapClass
   } = radarData;
 
+  // officialPlanDataForDetails の定義を handleBenefitClick の前に移動
+  const getOfficialPlanDataKey = (context) => {
+    switch (context) {
+      case 'recommended': return 'recommendedPlanData';
+      case 'premier': return 'planAData';
+      case 'medicalFocus': return 'planB_MedicalFocusData';
+      case 'lifeProtectionFocus': return 'planC_DeathFocusData';
+      default: return null;
+    }
+  };
+  const officialPlanDataKey = getOfficialPlanDataKey(currentPlanContext);
+  const officialPlanDataForDetails = officialPlanDataKey ? initialCustomerData[officialPlanDataKey] : null;
+
   const handleRegisterContract = useCallback(() => {
     showOtherContractGuide();
   }, [showOtherContractGuide]);
@@ -282,8 +303,24 @@ function App() {
 
   const handleBenefitClick = useCallback((benefitInfo) => {
     console.log("Benefit clicked (from PlanDetails or similar):", benefitInfo);
-    generateAndSetAiMessage('benefit_details', benefitInfo);
-  }, [generateAndSetAiMessage]);
+    // generateAndSetAiMessage('benefit_details', benefitInfo); // 古い呼び出しを置き換える
+    
+    // benefitInfo に planData と currentPlanContext, currentPlanName を含める必要がある
+    // PlanDetails から渡される情報に基づいて showRichBenefitDetailGuide を呼び出す
+    // App.js のスコープで planData (simulatedData) と currentPlanContext は利用可能
+    // currentPlanName は officialPlanDataForDetails.name や currentPlanContext から導出可能
+    
+    let planName = 'カスタムプラン'; // デフォルト
+    if (currentPlanContext !== 'custom' && officialPlanDataForDetails) {
+      planName = officialPlanDataForDetails.name;
+    } else if (currentPlanContext === 'recommended' && initialCustomerData.recommendedPlanData) {
+      planName = initialCustomerData.recommendedPlanData.name; // 推奨プランの場合
+    } 
+    // 他の固定プラン名も必要に応じてここで設定
+    
+    showRichBenefitDetailGuide(benefitInfo, simulatedData, currentPlanContext, planName);
+
+  }, [generateAndSetAiMessage, showRichBenefitDetailGuide, simulatedData, currentPlanContext, initialCustomerData.recommendedPlanData]); // 依存関係から officialPlanDataForDetails を削除し、代わりに currentPlanContext と initialCustomerData.recommendedPlanData を追加（または必要に応じて officialPlanDataForDetails の再計算に必要なものをすべて追加）
 
   const handleCurrentCoverageItemClick = useCallback((item) => {
     showCoverageDetailGuide(item); 
@@ -309,24 +346,19 @@ function App() {
     return <p className="text-gray-500 italic text-center pt-2">気になるステップをタッチして、当時の気持ちを振り返ってみましょう <i className="far fa-hand-point-up ml-1"></i></p>;
   }, [activeTimelineEventId]);
 
-  useEffect(() => {
-    generateAndSetAiMessage('init');
-  }, [generateAndSetAiMessage]); 
-
-  const getOfficialPlanDataKey = (context) => {
-    switch (context) {
-      case 'recommended': return 'recommendedPlanData';
-      case 'premier': return 'planAData';
-      case 'medicalFocus': return 'planB_MedicalFocusData';
-      case 'lifeProtectionFocus': return 'planC_DeathFocusData';
-      default: return null;
+  // New toggleAiConcierge to set initial message when opening
+  const toggleAiConcierge = useCallback(() => {
+    originalToggleAiConcierge();
+    // If aiconcierge is being opened, and message is not already set (or set to initial/empty)
+    // For simplicity, we'll set 'init' message every time it's opened by toggle
+    // Note: !isAiConciergeOpen checks the state *before* the toggle takes full effect in this render cycle
+    if (!isAiConciergeOpen) { 
+      generateAndSetAiMessage('init');
     }
-  };
-  const officialPlanDataKey = getOfficialPlanDataKey(currentPlanContext);
-  const officialPlanDataForDetails = officialPlanDataKey ? initialCustomerData[officialPlanDataKey] : null;
+  }, [originalToggleAiConcierge, isAiConciergeOpen, generateAndSetAiMessage]);
 
   return (
-    <div className="dashboard-container max-w-7xl mx-auto my-2 p-1 bg-gray-100 shadow-lg rounded-lg font-sans relative">
+    <div className="dashboard-container max-w-7xl mx-auto  bg-gray-100 shadow-lg rounded-lg font-sans relative">
       <CustomerHeader
         customerProfile={initialCustomerData.profile} 
         onToggleAiConcierge={toggleAiConcierge} 
@@ -334,9 +366,9 @@ function App() {
         onShowNotifications={showNotificationListHandler} 
         notificationCount={notificationCount} 
       />
-      <main className="dashboard-main p-2 md:p-3">
-        <div className="main-content-columns flex flex-col lg:flex-row flex-wrap gap-3 mb-3">
-          <div className="left-column w-full lg:w-1/4 min-w-[280px] flex flex-col">
+      <main className="dashboard-main md:p-1">
+        <div className="main-content-columns flex flex-col lg:flex-row flex-wrap gap-2 mb-2">
+          <div className="left-column w-full lg:w-1/4 min-w-[150px] flex flex-col">
             <CurrentContracts
               currentCoverageSelf={initialCustomerData.currentCoverageSelf} 
               currentCoverageOther={initialCustomerData.currentCoverageOther} 
@@ -345,7 +377,7 @@ function App() {
               onShowCoverageItemGuide={handleCurrentCoverageItemClick} 
             />
           </div>
-          <div className="center-column w-full lg:flex-[1.5] min-w-[380px] flex flex-col">
+          <div className="center-column w-full lg:flex-[1.5] min-w-[480px] flex flex-col">
             {(indicatorsConfig && indicatorsConfig.length > 0 && 
               requiredRadarData && requiredRadarData.length > 0 &&
               currentRadarData && currentRadarData.length > 0 &&
@@ -371,7 +403,7 @@ function App() {
               </div>
             )}
           </div>
-          <div className="right-column w-full lg:flex-[1.5] min-w-[400px] flex flex-col gap-4">
+          <div className="right-column w-full lg:flex-[1.5] min-w-[440px] flex flex-col gap-4">
             <PlanDetails
               planData={simulatedData}
               currentPlanContext={currentPlanContext}
